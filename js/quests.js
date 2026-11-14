@@ -21,8 +21,12 @@ export const MISSIONS_PER_CHAPTER = 12;
 export const RESTORE_PER_MISSION = 9; // 11번째에 99%, 12번째에 100%
 
 // {A} = 지민아, {I} = 지민이 (뒤에 조사가 붙을 때)
+// 처음 시작 중(아직 저장 전)에 쓸 이름
+let tempName = null;
+export const setTempName = (n) => { tempName = n; };
+
 export function fill(text) {
-  const n = S.profile?.name || '친구';
+  const n = S.profile?.name || tempName || '친구';
   return text.replace(/\{A\}/g, josa(n, '아/야')).replace(/\{I\}/g, n + (hasBatchim(n) ? '이' : ''));
 }
 

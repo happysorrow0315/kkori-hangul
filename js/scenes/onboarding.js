@@ -4,14 +4,15 @@ import { go } from '../router.js';
 import { el, onTap, speech, sleep, toast, esc } from '../ui.js';
 import { villageBG, catSVG, zombieSVG, avatarSVG, AVATAR_OPTIONS } from '../art.js';
 import { say } from '../audio.js';
-import { fill, refreshBoard } from '../quests.js';
+import { fill, refreshBoard, setTempName } from '../quests.js';
 
 export async function onboardingScene(root) {
   const name = await askName(root);
-  S.profile = { name, avatar: null, catHat: null }; // 대사에 이름을 넣기 위해 먼저 설정 (아직 저장 안 함)
+  setTempName(name); // 프로필은 아바타까지 다 고른 뒤에 만듦 (중간 저장으로 빈 아바타가 남지 않게)
   const avatar = await makeAvatar(root, name);
-  S.profile.avatar = avatar;
   await opening(root);
+  S.profile = { name, avatar, catHat: null };
+  setTempName(null);
   save();
   refreshBoard();
   go('village');

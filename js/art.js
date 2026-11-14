@@ -130,7 +130,8 @@ export const AVATAR_OPTIONS = {
   outfit: ['#ff8fab', '#7ec4ff', '#ffd166', '#9be29b', '#b69cff'],
 };
 
-export function avatarSVG(a = {}) {
+export function avatarSVG(a) {
+  a = a || {}; // 저장 기록에 아바타가 비어 있어도 기본 모습으로
   const skin = a.skin || AVATAR_OPTIONS.skin[0];
   const hc = a.hairColor || AVATAR_OPTIONS.hairColor[0];
   const oc = a.outfit || AVATAR_OPTIONS.outfit[0];
