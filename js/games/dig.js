@@ -2,8 +2,9 @@
 import { el, onTap, shuffle, pick, speech, sleep, confetti, shake, esc, toast } from '../ui.js';
 import { itemSVG, digBG, shovelSVG, wormSVG, boneSVG, starSVG } from '../art.js';
 import { say, sfx, stopSay } from '../audio.js';
-import { syllables, compose, combineVowels, isVowel, isCompound, VOWEL_SPLIT, SIMILAR, josa } from '../hangul.js';
+import { syllables, compose, combineVowels, isVowel, isCompound, VOWEL_SPLIT, SIMILAR, SIMILAR_JONG, josa } from '../hangul.js';
 import { ALL_WORDS } from '../words.js';
+import { S } from '../state.js';
 import { digDecoys, splitChance, toolLevel, record, bumpSkill } from '../adaptive.js';
 import { frame, confirmExit, dots } from './common.js';
 
@@ -11,7 +12,7 @@ const COLS = 6, ROWS = 3;
 
 export async function playDig(root, { words, boss = false }) {
   const level = toolLevel('dig');
-  const f = frame(root, { bg: digBG(), title: boss ? '좀비괴물과 대결! 땅 파기' : '땅을 파서 글자를 맞춰요', cls: 'dig' });
+  const f = frame(root, { bg: digBG(S.chapter), title: boss ? '좀비괴물과 대결! 땅 파기' : '땅을 파서 글자를 맞춰요', cls: 'dig' });
   f.body.innerHTML = `
     <div class="dig-top">
       <div class="dig-pic"><div class="dig-pic-svg"></div><button class="dig-say" aria-label="듣기">${speakerIcon()}</button></div>
@@ -49,11 +50,13 @@ export async function playDig(root, { words, boss = false }) {
       needed.push(d.cho);
       if (split && isCompound(d.jung)) needed.push(...VOWEL_SPLIT[d.jung]);
       else needed.push(d.jung);
+      if (d.jong) needed.push(d.jong);
     });
     const decoys = [];
     const nDecoy = digDecoys();
     for (let k = 0; k < nDecoy * 4 && decoys.length < nDecoy; k++) {
-      const cand = pick(SIMILAR[pick(needed)] || []);
+      const base = pick(needed);
+      const cand = pick([...(SIMILAR[base] || []), ...(SIMILAR_JONG[base] || [])]);
       if (cand && !needed.includes(cand) && !decoys.includes(cand)) decoys.push(cand);
     }
     const contents = shuffle([
@@ -75,7 +78,10 @@ export async function playDig(root, { words, boss = false }) {
     const field = $('.dig-field');
     field.innerHTML = '';
     const checkBtn = $('.dig-check');
-    const slots = sy.map(() => ({ cho: null, jung: null })); // cho:{j,ids:[]} jung:{j,ids:[]}
+    // 칸: 첫소리, 가운데소리, (받침 있는 글자만) 받침. 값은 {j, ids:[]}
+    const slots = sy.map((d) => ({ cho: null, jung: null, jong: null, hasJong: !!d.jong }));
+    const full = (s) => s.cho && s.jung && (!s.hasJong || s.jong);
+    const made1 = (s) => compose(s.cho.j, s.jung.j, s.jong?.j || '');
     let last = 0;
 
     contents.forEach((c, idx) => {
@@ -89,19 +95,20 @@ export async function playDig(root, { words, boss = false }) {
     const blocks = $('.dig-blocks');
     function renderBlocks() {
       blocks.innerHTML = '';
+      blocks.classList.toggle('has-jong', slots.some((x) => x.hasJong));
       slots.forEach((s, i) => {
-        const big = s.cho && s.jung ? compose(s.cho.j, s.jung.j) : (s.cho?.j || s.jung?.j || '');
+        const big = s.cho && s.jung ? made1(s) : (s.cho?.j || s.jung?.j || '');
         const b = el(`<div class="dig-block ${i === last ? 'active' : ''}">
           <div class="dig-big ${big ? '' : 'empty'}">${esc(big || '?')}</div>
           <div class="dig-slots">
             <button class="dig-slot ${s.cho ? 'on' : ''}" data-part="cho">${esc(s.cho?.j || '')}</button>
             <button class="dig-slot ${s.jung ? 'on' : ''}" data-part="jung">${esc(s.jung?.j || '')}</button>
-          </div></div>`);
+          </div>${s.hasJong ? `<button class="dig-slot jong ${s.jong ? 'on' : ''}" data-part="jong">${esc(s.jong?.j || '받침')}</button>` : ''}</div>`);
         b.querySelectorAll('.dig-slot').forEach((sl) => onTap(sl, () => unplace(i, sl.dataset.part)));
         onTap(b.querySelector('.dig-big'), () => { if (big && s.cho && s.jung) say(big); });
         blocks.appendChild(b);
       });
-      checkBtn.disabled = !slots.every((s) => s.cho && s.jung);
+      checkBtn.disabled = !slots.every(full);
     }
     renderBlocks();
 
@@ -166,9 +173,14 @@ export async function playDig(root, { words, boss = false }) {
         if (target_i < 0) { shake(tile); return; }
         slots[target_i].jung = { j, ids: [id] };
       } else {
-        target_i = slots.findIndex((s) => !s.cho);
+        let part = 'cho';
+        target_i = -1;
+        for (let i = 0; i < slots.length && target_i < 0; i++) {
+          if (!slots[i].cho) { target_i = i; part = 'cho'; }
+          else if (slots[i].hasJong && !slots[i].jong) { target_i = i; part = 'jong'; }
+        }
         if (target_i < 0) { shake(tile); return; }
-        slots[target_i].cho = { j, ids: [id] };
+        slots[target_i][part] = { j, ids: [id] };
       }
       last = target_i;
       tile.classList.add('used');
@@ -187,7 +199,7 @@ export async function playDig(root, { words, boss = false }) {
 
     onTapOnce(checkBtn, async () => {
       if (done || checkBtn.disabled) return;
-      const made = slots.map((s) => compose(s.cho.j, s.jung.j)).join('');
+      const made = slots.map(made1).join('');
       if (made === target) {
         done = true;
         sfx('win');
@@ -209,7 +221,8 @@ export async function playDig(root, { words, boss = false }) {
       let tip = '';
       slots.forEach((s, i) => {
         const want = sy[i];
-        if (s.cho.j === want.cho && s.jung.j === want.jung) return;
+        if (s.cho.j === want.cho && s.jung.j === want.jung && (s.jong?.j || '') === want.jong) return;
+        if (s.cho.j === want.cho && s.jung.j === want.jung) { tip = '받침을 다시 봐! 아래에 붙는 글자야.'; return; }
         if (isCompound(want.jung) && s.jung.j === VOWEL_SPLIT[want.jung][0] && s.cho.j === want.cho) tip = `${s.jung.j}에 모음을 하나 더 합쳐 봐!`;
       });
       const isWord = ALL_WORDS.includes(made);
@@ -227,6 +240,7 @@ export async function playDig(root, { words, boss = false }) {
         const want = sy[i];
         if (s.cho && s.cho.j !== want.cho) unplace(i, 'cho');
         if (s.jung && s.jung.j !== want.jung) unplace(i, 'jung');
+        if (s.jong && s.jong.j !== want.jong) unplace(i, 'jong');
       });
     });
 
@@ -242,7 +256,7 @@ export async function playDig(root, { words, boss = false }) {
         else if (!s.jung || s.jung.j !== want.jung) {
           need = isCompound(want.jung) ? [want.jung, ...VOWEL_SPLIT[want.jung]] : [want.jung];
           if (s.jung && isCompound(want.jung) && s.jung.j === VOWEL_SPLIT[want.jung][0]) need = [VOWEL_SPLIT[want.jung][1]];
-        }
+        } else if (want.jong && (!s.jong || s.jong.j !== want.jong)) need = [want.jong];
         if (!need) continue;
         const t = [...tray.querySelectorAll('.jamo-tile:not(.used)')].find((x) => need.includes(x.dataset.j));
         if (t) { glow(t); return; }

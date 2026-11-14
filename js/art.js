@@ -1,11 +1,6 @@
 // 모든 그림은 코드로 그린 SVG
-const O = '#5a4032';
-const wrap = (inner, vb = '0 0 100 100', extra = '') =>
-  `<svg viewBox="${vb}" xmlns="http://www.w3.org/2000/svg" stroke="${O}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" ${extra}>${inner}</svg>`;
-
-const eye = (x, y, r = 3.5) =>
-  `<circle cx="${x}" cy="${y}" r="${r}" fill="${O}" stroke="none"/><circle cx="${x - r * 0.35}" cy="${y - r * 0.4}" r="${r * 0.35}" fill="#fff" stroke="none"/>`;
-const blush = (x, y, rx = 6, ry = 3.5) => `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="#ff9fb6" opacity=".55" stroke="none"/>`;
+import { O, wrap, eye, blush, castle } from './svgkit.js';
+import { ITEMS2, VILLAGERS2 } from './art2.js';
 
 // ───────────────────────── 단어 그림 ─────────────────────────
 const ITEMS = {
@@ -48,11 +43,11 @@ const ITEMS = {
 };
 
 export function itemSVG(word) {
-  const inner = ITEMS[word];
+  const inner = ITEMS[word] || ITEMS2[word];
   if (!inner) return wrap(`<rect x="15" y="15" width="70" height="70" rx="14" fill="#eee"/><text x="50" y="62" font-size="36" text-anchor="middle" stroke="none" fill="${O}">?</text>`);
   return wrap(inner);
 }
-export const hasItemArt = (w) => w in ITEMS;
+export const hasItemArt = (w) => w in ITEMS || w in ITEMS2;
 
 // ───────────────────────── 꾸미기 장식 ─────────────────────────
 export const DECOR = {
@@ -164,6 +159,8 @@ export const VILLAGERS = {
 };
 
 // ───────────────────────── 도구 ─────────────────────────
+Object.assign(VILLAGERS, VILLAGERS2);
+
 const METAL = ['#c9a06a', '#cfd8e3', '#ffd34d'];
 export function shovelSVG(level = 0) {
   return wrap(`<rect x="46" y="6" width="8" height="54" rx="3" fill="#b07a4a"/><rect x="36" y="4" width="28" height="9" rx="4" fill="#b07a4a"/><path d="M30 58 H70 V74 C70 90 50 96 50 96 C50 96 30 90 30 74Z" fill="${METAL[level]}"/>${level === 2 ? `<path d="M76 30 l3 6 l6 1 l-4 4 l1 6 l-6 -3 l-6 3 l1 -6 l-4 -4 l6 -1z" fill="#fff6b0" stroke-width="1.5"/>` : ''}`);
@@ -201,6 +198,7 @@ export function villageBG(restore = 0, opts = {}) {
     <circle cx="1060" cy="100" r="54" fill="#ffe27a" stroke="#f5c542" stroke-width="5"/>
     <g fill="#fff" opacity=".95"><ellipse cx="200" cy="110" rx="70" ry="28"/><ellipse cx="250" cy="96" rx="46" ry="30"/><ellipse cx="640" cy="80" rx="80" ry="26"/><ellipse cx="690" cy="66" rx="44" ry="28"/></g>
     <path d="M0 400 C160 320 300 360 420 380 C560 300 760 330 900 370 C1000 330 1100 340 1180 360 V820 H0Z" fill="#b7e4a0"/>
+    ${opts.castle ? castle(303, 442, 0.55) : ''}
     <path d="M0 450 C200 420 400 440 600 430 C800 420 1000 440 1180 430 V820 H0Z" fill="#9fd88a"/>
     <path d="M560 820 C540 700 640 640 600 540 C580 490 520 470 470 455 M600 540 C680 520 800 500 900 470" fill="none" stroke="#f1d9a8" stroke-width="46" stroke-linecap="round"/>
     <!-- 꼬리네 집 -->
@@ -241,18 +239,21 @@ export function villageBG(restore = 0, opts = {}) {
   </svg>`;
 }
 
-export function martBG() {
+export function martBG(ch = 1) {
+  const m = ch >= 2;
   return `<svg viewBox="0 0 1180 820" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
-    <rect width="1180" height="820" fill="#ffe8c9"/>
-    <g fill="#f5d4a8"><rect y="0" width="1180" height="24"/></g>
-    <g stroke="#e8c08e" stroke-width="3">${Array.from({ length: 12 }, (_, i) => `<path d="M${i * 100 + 50} 0 V820"/>`).join('')}</g>
-    <rect y="700" width="1180" height="120" fill="#d9a46a"/>
+    <rect width="1180" height="820" fill="${m ? '#efe6ff' : '#ffe8c9'}"/>
+    <g fill="${m ? '#d9c8f5' : '#f5d4a8'}"><rect y="0" width="1180" height="24"/></g>
+    <g stroke="${m ? '#ddd0f5' : '#e8c08e'}" stroke-width="3">${Array.from({ length: 12 }, (_, i) => `<path d="M${i * 100 + 50} 0 V820"/>`).join('')}</g>
+    ${m ? `<g fill="#ffd34d" opacity=".7">${Array.from({ length: 14 }, (_, i) => `<circle cx="${(i * 89) % 1180}" cy="${30 + ((i * 47) % 200)}" r="${3 + (i % 3)}"/>`).join('')}</g>` : ''}
+    <rect y="700" width="1180" height="120" fill="${m ? '#b69cff' : '#d9a46a'}"/>
   </svg>`;
 }
 
-export function digBG() {
+export function digBG(ch = 1) {
   return `<svg viewBox="0 0 1180 820" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
-    <rect width="1180" height="820" fill="#bfe6ff"/>
+    <rect width="1180" height="820" fill="${ch >= 2 ? '#e6dcff' : '#bfe6ff'}"/>
+    ${ch >= 2 ? castle(930, 215, 0.6) : ''}
     <g fill="#fff"><ellipse cx="160" cy="70" rx="80" ry="26"/><ellipse cx="980" cy="60" rx="90" ry="24"/></g>
     <path d="M0 220 C200 190 400 210 600 200 C800 190 1000 215 1180 200 V820 H0Z" fill="#9fd88a"/>
     <rect y="460" width="1180" height="360" fill="#a8744a"/>
@@ -273,9 +274,10 @@ export function traceBG() {
 }
 
 // ───────────────────────── 새 미니게임 배경 ─────────────────────────
-export function pondBG() {
+export function pondBG(ch = 1) {
   return `<svg viewBox="0 0 1180 820" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
-    <rect width="1180" height="820" fill="#bfe6ff"/>
+    <rect width="1180" height="820" fill="${ch >= 2 ? '#e6dcff' : '#bfe6ff'}"/>
+    ${ch >= 2 ? castle(560, 225, 0.55) : ''}
     <g fill="#fff"><ellipse cx="260" cy="70" rx="80" ry="24"/><ellipse cx="900" cy="56" rx="90" ry="26"/></g>
     <path d="M0 230 C200 200 420 230 600 215 C820 200 1000 225 1180 210 V820 H0Z" fill="#9fd88a"/>
     <ellipse cx="640" cy="580" rx="560" ry="250" fill="#5fb4e8" stroke="#5a4032" stroke-width="6"/>
@@ -288,16 +290,16 @@ export function pondBG() {
   </svg>`;
 }
 
-export function riverBG() {
+export function riverBG(ch = 1) {
   return `<svg viewBox="0 0 1180 820" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
-    <rect width="1180" height="820" fill="#bfe6ff"/>
+    <rect width="1180" height="820" fill="${ch >= 2 ? '#e6dcff' : '#bfe6ff'}"/>
     <g fill="#fff"><ellipse cx="300" cy="80" rx="90" ry="26"/><ellipse cx="860" cy="64" rx="80" ry="24"/></g>
     <path d="M0 300 C200 260 400 290 600 270 C800 250 1000 280 1180 262 V820 H0Z" fill="#b7e4a0"/>
     <rect x="0" y="470" width="1180" height="350" fill="#5fb4e8"/>
     <g fill="none" stroke="#bfe6ff" stroke-width="5" stroke-linecap="round"><path d="M260 560 q25 -12 50 0 M700 600 q25 -12 50 0 M480 720 q25 -12 50 0 M900 700 q25 -12 50 0 M360 790 q25 -12 50 0"/></g>
     <path d="M0 410 H190 C205 480 200 640 170 820 H0Z" fill="#9fd88a" stroke="#5a4032" stroke-width="6"/>
     <path d="M1180 410 H1000 C985 480 990 640 1020 820 H1180Z" fill="#9fd88a" stroke="#5a4032" stroke-width="6"/>
-    <g stroke="#5a4032" stroke-width="4"><circle cx="1090" cy="330" r="60" fill="#7cc576"/><rect x="1080" y="370" width="20" height="44" fill="#b07a4a"/></g>
+    ${ch >= 2 ? castle(1005, 412, 0.78) : '<g stroke="#5a4032" stroke-width="4"><circle cx="1090" cy="330" r="60" fill="#7cc576"/><rect x="1080" y="370" width="20" height="44" fill="#b07a4a"/></g>'}
   </svg>`;
 }
 
@@ -305,14 +307,19 @@ export function riverBG() {
 export const HIDE_SPOTS = [
   [170, 330, '#5aa356'], [290, 335, '#5aa356'], [230, 440, '#5aa356'], [330, 410, '#5aa356'], [130, 410, '#5aa356'],
   [232, 570, '#8a5a32'], [232, 690, '#8a5a32'],
-  [470, 560, '#e3c69c'], [600, 650, '#e3c69c'], [600, 545, '#e3c69c'], [470, 680, '#e3c69c'],
-  [530, 432, '#e0607e'],
+  [470, 560, 'wall'], [600, 650, 'wall'], [600, 545, 'wall'], [470, 680, 'wall'],
+  [530, 432, 'roof'],
   [730, 712, '#4f9a4a'], [840, 735, '#4f9a4a'], [1010, 690, '#4f9a4a'], [1100, 730, '#4f9a4a'],
   [870, 525, '#4f9ad8'], [990, 535, '#4f9ad8'],
   [720, 345, '#9ccbe8'], [1000, 330, '#9ccbe8'], [420, 335, '#9ccbe8'],
   [360, 775, '#7cb86a'], [660, 790, '#7cb86a'],
 ];
-export function hiddenBG() {
+export function hideSpots(ch = 1) {
+  const c = { wall: ch >= 2 ? '#cfc2ea' : '#e3c69c', roof: ch >= 2 ? '#9a80e6' : '#e0607e' };
+  return HIDE_SPOTS.map(([x, y, k]) => [x, y, c[k] || k]);
+}
+export function hiddenBG(ch = 1) {
+  const m = ch >= 2;
   return `<svg viewBox="0 0 1180 820" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
     <rect width="1180" height="820" fill="#bfe6ff"/>
     <g fill="#fff"><ellipse cx="700" cy="310" rx="90" ry="34"/><ellipse cx="990" cy="295" rx="80" ry="30"/><ellipse cx="420" cy="295" rx="70" ry="28"/></g>
@@ -320,8 +327,8 @@ export function hiddenBG() {
     <g stroke="#5a4032" stroke-width="5" stroke-linejoin="round">
       <rect x="205" y="430" width="55" height="340" rx="10" fill="#b07a4a"/>
       <circle cx="230" cy="370" r="125" fill="#7cc576"/>
-      <rect x="420" y="470" width="230" height="270" rx="8" fill="#fff1d6"/>
-      <path d="M396 474 L535 360 L674 474Z" fill="#ff8fa3"/>
+      <rect x="420" y="470" width="230" height="270" rx="8" fill="${m ? '#ece6f8' : '#fff1d6'}"/>
+      <path d="M396 474 L535 360 L674 474Z" fill="${m ? '#b69cff' : '#ff8fa3'}"/>${m ? '<path d="M535 360 V330 L556 338 L535 346" fill="#ff8fab"/>' : ''}
       <rect x="512" y="640" width="48" height="100" rx="18" fill="#c9824a"/>
       <ellipse cx="930" cy="530" rx="170" ry="62" fill="#7ec4ff"/>
       <ellipse cx="785" cy="725" rx="130" ry="72" fill="#6bb865"/>

@@ -18,7 +18,7 @@ function shelfWords(target) {
 }
 
 export async function playFind(root, { words, boss = false }) {
-  const f = frame(root, { bg: martBG(), title: boss ? '좀비괴물과 대결! 물건 찾기' : '좀비괴물보다 먼저 찾아라!', cls: 'find' });
+  const f = frame(root, { bg: martBG(S.chapter), title: boss ? '좀비괴물과 대결! 물건 찾기' : '좀비괴물보다 먼저 찾아라!', cls: 'find' });
   f.body.innerHTML = `
     <div class="find-top">
       <div class="word-card"><div class="word-card-label">이 글자를 찾아요</div><div class="word-card-word"></div></div>

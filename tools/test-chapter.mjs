@@ -4,6 +4,8 @@ import fs from 'fs';
 
 const EDGE = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
 const OUT = 'tools/shots';
+const CH = Number(process.env.CH || 1);
+const P = CH === 2 ? 'c2-' : 'c-';
 fs.mkdirSync(OUT, { recursive: true });
 const browser = await chromium.launch({ executablePath: EDGE });
 const page = await (await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true })).newPage();
@@ -37,7 +39,7 @@ async function playDig() {
   const seq = await page.evaluate(async (w) => {
     const { syllables, VOWEL_SPLIT, isCompound } = await import('/js/hangul.js');
     const tray = [...document.querySelectorAll('.jamo-tile')].map((t) => t.dataset.j);
-    return syllables(w).flatMap((d) => [d.cho, ...(isCompound(d.jung) && !tray.includes(d.jung) ? VOWEL_SPLIT[d.jung] : [d.jung])]);
+    return syllables(w).flatMap((d) => [d.cho, ...(isCompound(d.jung) && !tray.includes(d.jung) ? VOWEL_SPLIT[d.jung] : [d.jung]), ...(d.jong ? [d.jong] : [])]);
   }, w);
   for (const j of seq) { await page.locator(`.jamo-tile:not(.used)[data-j="${j}"]`).first().click(); await wait(80); }
   await page.locator('.dig-check').click();
@@ -65,7 +67,7 @@ async function playFish(first) {
   if (first) {
     const n = await need();
     const wrong = page.locator(`.fish-one:not(.caught):not([data-s="${n}"])`).first();
-    if (await wrong.count()) { await wrong.dispatchEvent('pointerdown'); await wait(250); await shot('c-fish-wrong'); await wait(600); }
+    if (await wrong.count()) { await wrong.dispatchEvent('pointerdown'); await wait(250); await shot(P + 'fish-wrong'); await wait(600); }
   }
   for (let i = 0; i < 40 && await has('.game.fish'); i++) {
     if (await has('.speech')) { await clickSpeech(); continue; }
@@ -79,7 +81,7 @@ async function playBridge(first) {
   if (first) {
     const n = await need();
     const wrong = page.locator(`.br-block:not(.busy):not([data-s="${n}"])`).first();
-    if (await wrong.count()) { await wrong.click(); await wait(300); await shot('c-bridge-wrong'); await wait(800); }
+    if (await wrong.count()) { await wrong.click(); await wait(300); await shot(P + 'bridge-wrong'); await wait(800); }
   }
   for (let i = 0; i < 30 && await has('.game.bridge'); i++) {
     if (await has('.speech')) { await clickSpeech(); continue; }
@@ -93,7 +95,7 @@ async function playOrb(first) {
   if (first) {
     const n = await need();
     const wrong = page.locator(`.orb-one:not(.pop-out):not([data-j="${n}"])`).first();
-    if (await wrong.count()) { await wrong.dispatchEvent('pointerdown'); await wait(250); await shot('c-orb-wrong'); await wait(400); }
+    if (await wrong.count()) { await wrong.dispatchEvent('pointerdown'); await wait(250); await shot(P + 'orb-wrong'); await wait(400); }
   }
   for (let i = 0; i < 40 && await has('.game.orb'); i++) {
     if (await has('.speech')) { await clickSpeech(); continue; }
@@ -109,7 +111,7 @@ async function playHidden(first) {
     const wrong = page.locator('.hid-piece:not(.found)').filter({ hasNot: page.locator('xx') });
     const all = await wrong.evaluateAll((els) => els.map((e) => e.dataset.j));
     const k = all.findIndex((j) => !n.includes(j));
-    if (k >= 0) { await wrong.nth(k).dispatchEvent('pointerdown'); await wait(250); await shot('c-hidden-wrong'); await wait(300); }
+    if (k >= 0) { await wrong.nth(k).dispatchEvent('pointerdown'); await wait(250); await shot(P + 'hidden-wrong'); await wait(300); }
   }
   for (let i = 0; i < 30 && await has('.game.hidden'); i++) {
     const n = await need();
@@ -133,7 +135,7 @@ async function playUntilResult() {
     if (await has('.speech')) { await clickSpeech(); continue; }
     const t = await gameType();
     if (!t) { await wait(300); continue; }
-    if (!shotOnce.has(t)) { shotOnce.add(t); await shot('c-game-' + t); }
+    if (!shotOnce.has(t)) { shotOnce.add(t); await shot(P + 'game-' + t); }
     const first = !seenFirst.has(t) && ['fish', 'bridge', 'orb', 'hidden'].includes(t);
     seenFirst.add(t);
     await PLAY[t](first);
@@ -144,13 +146,16 @@ async function playUntilResult() {
 
 try {
   await page.goto('http://localhost:8080/tools/blank.html');
-  await page.evaluate(() => {
+  await page.evaluate((ch) => {
     localStorage.clear();
-    localStorage.setItem('kkori-save-v1', JSON.stringify({ version: 1, profile: { name: '테스트', avatar: {}, catHat: null }, flags: { villageIntro: true } }));
-  });
+    localStorage.setItem('kkori-save-v1', JSON.stringify(ch === 2
+      ? { version: 1, profile: { name: '테스트', avatar: { hair: 'bob' }, catHat: null }, chapter: 1, restore: 100, story: { done: ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8'], bossDone: true, chapterClear: true }, flags: { villageIntro: true } }
+      : { version: 1, profile: { name: '테스트', avatar: {}, catHat: null }, flags: { villageIntro: true } }));
+  }, CH);
   await page.goto('http://localhost:8080/');
   await page.locator('.title-start').click();
   await page.waitForSelector('.village');
+  if (CH === 2) { await wait(600); await shot(P + 'transition'); }
   const played = [];
   for (let m = 0; m < 20; m++) {
     await clearSpeeches();
@@ -159,14 +164,14 @@ try {
     const cards = await page.evaluate(async () => (await import('/js/state.js')).S.board.map((q) => q.boss ? 'boss' : (q.story ? 'story:' : '') + q.type));
     const restore = await page.evaluate(async () => (await import('/js/state.js')).S.restore);
     console.log(`미션 ${m + 1} | 복원 ${restore}% | 게시판: ${cards.join(', ')}`);
-    if (m === 0) await shot('c-board');
+    if (m === 0) await shot(P + 'board');
     const normalTypes = cards.filter((c) => !c.startsWith('story') && c !== 'boss');
     if (new Set(normalTypes).size !== normalTypes.length) throw new Error('게시판에 같은 놀이가 겹침');
     const isBoss = cards[0] === 'boss';
     played.push(cards[0]);
     await page.locator('.qcard .qgo').first().click();
     await playUntilResult();
-    if (isBoss) await shot('c-boss-result');
+    if (isBoss) await shot(P + 'boss-result');
     await page.locator('.result-go').click();
     await wait(500);
     await clearSpeeches();
@@ -177,10 +182,12 @@ try {
   console.log(JSON.stringify(st));
   const kinds = new Set(played.map((p) => p.replace('story:', '')));
   console.log('해 본 놀이 종류:', [...kinds].join(', '));
-  if (!st.clear) throw new Error('챕터 클리어 안 됨');
+  const ch = await page.evaluate(async () => { const { S } = await import('/js/state.js'); return { chapter: S.chapter, cleared: S.story.cleared }; });
+  console.log('챕터:', JSON.stringify(ch));
+  if (!st.clear || !ch.cleared.includes(CH)) throw new Error('챕터 클리어 안 됨');
   if (st.missions !== 13) console.log('⚠ 미션 수가 13(12+보스)이 아님:', st.missions);
-  await shot('c-village-end');
-  console.log('✅ 1챕터 전체 통과');
+  await shot(P + 'village-end');
+  console.log('✅ ' + CH + '챕터 전체 통과');
 } catch (e) {
   console.log('❌ 실패:', e.message);
   await page.screenshot({ path: `${OUT}/zz-chapter-fail.png` });

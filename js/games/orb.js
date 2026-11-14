@@ -2,7 +2,7 @@
 import { el, shuffle, pick, sleep, confetti, nudge, speech, esc } from '../ui.js';
 import { itemSVG, traceBG, zombieSVG, wandSVG } from '../art.js';
 import { say, sfx, stopSay } from '../audio.js';
-import { syllables, compose, combineVowels, isCompound, VOWEL_SPLIT, SIMILAR } from '../hangul.js';
+import { syllables, compose, combineVowels, isCompound, VOWEL_SPLIT, SIMILAR, SIMILAR_JONG } from '../hangul.js';
 import { record, bumpSkill, skill, splitChance } from '../adaptive.js';
 import { frame, confirmExit, dots, picCard, rebind } from './common.js';
 
@@ -43,8 +43,9 @@ export async function playOrb(root, { words, boss = false }) {
       seq.push({ j: d.cho, si, part: 'cho' });
       if (split && isCompound(d.jung)) VOWEL_SPLIT[d.jung].forEach((j) => seq.push({ j, si, part: 'jung' }));
       else seq.push({ j: d.jung, si, part: 'jung' });
+      if (d.jong) seq.push({ j: d.jong, si, part: 'jong' });
     });
-    const built = sy.map(() => ({ cho: '', jung: '' }));
+    const built = sy.map(() => ({ cho: '', jung: '', jong: '' }));
     let idx = 0, mistakes = 0, hinted = false, steps = 0, running = true, paused = false, busy = false, lastT = 0;
     const orbs = [];
     f.node.dataset.w = target;
@@ -55,7 +56,7 @@ export async function playOrb(root, { words, boss = false }) {
 
     const drawBlocks = () => {
       blocks.innerHTML = built.map((b, i) => {
-        const big = b.cho && b.jung ? compose(b.cho, b.jung) : (b.cho || b.jung || '');
+        const big = b.cho && b.jung ? compose(b.cho, b.jung, b.jong) : (b.cho || b.jung || '');
         const cur = seq[idx]?.si === i;
         return `<div class="g-block ${cur ? 'cur' : ''}"><div class="g-big ${big ? '' : 'empty'}">${esc(big || '?')}</div></div>`;
       }).join('');
@@ -70,7 +71,7 @@ export async function playOrb(root, { words, boss = false }) {
       area.innerHTML = '';
       orbs.length = 0;
       const need = seq.slice(idx).map((s) => s.j);
-      const decoys = shuffle([...new Set(need.flatMap((j) => SIMILAR[j] || []))].filter((j) => !need.includes(j)))
+      const decoys = shuffle([...new Set(need.flatMap((j) => [...(SIMILAR[j] || []), ...(SIMILAR_JONG[j] || [])]))].filter((j) => !need.includes(j)))
         .slice(0, 3 + Math.round(skill('orb') * 2));
       [...need, ...decoys].forEach((j) => addOrb(j));
     }
@@ -113,6 +114,7 @@ export async function playOrb(root, { words, boss = false }) {
         setTimeout(() => o.node.remove(), 300);
         const b = built[want.si];
         if (want.part === 'cho') b.cho = o.j;
+        else if (want.part === 'jong') b.jong = o.j;
         else if (b.jung && combineVowels(b.jung, o.j)) {
           const before = b.jung;
           b.jung = combineVowels(before, o.j);
@@ -148,7 +150,7 @@ export async function playOrb(root, { words, boss = false }) {
       if (!running) return;
       await speech({ who: 'kkori', text: '괜찮아! 천천히 다시 해 보자. 하나씩 차례로 맞히는 거야.', root });
       steps = 0; idx = 0;
-      built.forEach((b) => { b.cho = ''; b.jung = ''; });
+      built.forEach((b) => { b.cho = ''; b.jung = ''; b.jong = ''; });
       drawBlocks(); drawSteps(); spawnAll();
       paused = false;
     }

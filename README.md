@@ -38,6 +38,7 @@ npm install
 node tools/serve.js          # 다른 창에서 켜 두기
 node tools/test.mjs          # 처음 시작 ~ 미니게임 3종 ~ 꾸미기 ~ 상점 ~ 부모 설정 ~ 30분 잠금
 node tools/test-chapter.mjs  # 게시판에서 골라 가며 1챕터 12개 미션 + 보스까지, 새 놀이 오답 흐름 포함
+CH=2 node tools/test-chapter.mjs  # 1챕터를 깬 기록에서 2챕터로 넘어가 끝까지
 ```
 스크린샷은 `tools/shots/`에 저장된다. Microsoft Edge가 설치되어 있어야 한다.
 
@@ -45,7 +46,8 @@ node tools/test-chapter.mjs  # 게시판에서 골라 가며 1챕터 12개 미�
 
 | 파일 | 역할 |
 | --- | --- |
-| `js/words.js` | 챕터별 단어 목록 |
+| `js/words.js` | 챕터별 단어 목록 (1챕터 동화 숲: 받침 없는 글자·복모음, 2챕터 마법 왕국: 받침) |
+| `js/art2.js` | 2챕터 단어 그림과 새 주민 (아기 용, 요정) |
 | `js/quests.js` | 이야기 의뢰 8개, 일반 의뢰 생성, 보상 |
 | `js/adaptive.js` | 난이도 자동 조절, 부모 수동 설정 반영 |
 | `js/games/find.js` | 미니게임 1: 좀비괴물보다 먼저 물건 찾기 |

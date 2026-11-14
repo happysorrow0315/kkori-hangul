@@ -14,7 +14,7 @@ const COLORS = ['#ff9f43', '#ff8fab', '#ffd166', '#9be29b', '#b69cff', '#7ec4ff'
 const ROD = { x: 1080, y: 300 };
 
 export async function playFish(root, { words, boss = false }) {
-  const f = frame(root, { bg: pondBG(), title: boss ? '좀비괴물과 대결! 글자 낚시' : '연못에서 글자를 낚아요', cls: 'fish' });
+  const f = frame(root, { bg: pondBG(S.chapter), title: boss ? '좀비괴물과 대결! 글자 낚시' : '연못에서 글자를 낚아요', cls: 'fish' });
   f.body.innerHTML = `
     <div class="g-top">${picCard()}<div class="g-slots"></div><div class="g-dots"></div></div>
     <div class="rod">${rodSVG()}</div>

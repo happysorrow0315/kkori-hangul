@@ -22,7 +22,7 @@ function defaults() {
     stats: { words: {}, skill: { find: 0.3, dig: 0.3, trace: 0.3 } },
     tools: { find: 0, dig: 0, trace: 0 }, // 미션 완료 횟수
     missionsDone: 0,
-    story: { done: [], bossDone: false, chapterClear: false },
+    story: { done: [], bossDone: false, chapterClear: false, cleared: [] },
     board: [],
     settings: {
       pwHash: DEFAULT_PW_HASH,
@@ -56,6 +56,8 @@ function load() {
 }
 
 export const S = load();
+// 예전 기록: 1챕터 보스를 깼으면 깬 챕터 목록에 넣기
+if (S.story.chapterClear && !(S.story.cleared || []).length) S.story.cleared = [1];
 
 let saveTimer = null;
 export function save() {

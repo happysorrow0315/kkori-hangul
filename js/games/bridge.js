@@ -10,7 +10,7 @@ import { frame, confirmExit, speakerIcon, rebind } from './common.js';
 const X0 = 200, X1 = 990;
 
 export async function playBridge(root, { words, boss = false }) {
-  const f = frame(root, { bg: riverBG(), title: boss ? '좀비괴물과 대결! 다리 만들기' : '글자 블록으로 다리를 만들어요', cls: 'bridge' });
+  const f = frame(root, { bg: riverBG(S.chapter), title: boss ? '좀비괴물과 대결! 다리 만들기' : '글자 블록으로 다리를 만들어요', cls: 'bridge' });
   f.body.innerHTML = `
     <div class="br-race"><div class="br-track"><div class="br-zombie">${zombieSVG('evil')}</div></div><span>좀비괴물이 쫓아와요!</span></div>
     <div class="br-pics"></div>

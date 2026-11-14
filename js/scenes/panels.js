@@ -4,7 +4,7 @@ import { el, onTap, esc, portrait, toast, confetti } from '../ui.js';
 import { itemSVG, catSVG, decorSVG, DECOR, HAT_LIST, starSVG, zombieSVG } from '../art.js';
 import { say, sfx } from '../audio.js';
 import { refreshBoard, TYPE_INFO, fill } from '../quests.js';
-import { wordsOf, catOf, CATS } from '../words.js';
+import { wordsOf, catOf, CATS, CHAPTERS } from '../words.js';
 import { runMission } from './mission.js';
 
 function modal(root, cls, inner) {
@@ -75,12 +75,18 @@ export function openShop(root, onChange) {
 }
 
 export function openDex(root) {
-  const words = wordsOf(S.chapter);
+  const chs = Array.from({ length: S.chapter }, (_, i) => S.chapter - i); // 최신 챕터 먼저
+  const words = chs.flatMap((c) => wordsOf(c));
   const got = words.filter((w) => S.dex[w]).length;
-  const sec = (cat) => `<div class="dex-sec">${esc(CATS[cat])}</div><div class="dex-grid">${words.filter((w) => catOf(w) === cat).map((w) => S.dex[w]
+  const secs = chs.map((c) => {
+    const ws = wordsOf(c);
+    const cats = [...new Set(ws.map(catOf))];
+    return `<div class="dex-ch">${c}챕터 ${esc(CHAPTERS[c]?.name || '')} <small>${ws.filter((w) => S.dex[w]).length} / ${ws.length}</small></div>` + cats.map((cat) => sec(cat, ws)).join('');
+  }).join('');
+  function sec(cat, list) { return `<div class="dex-sec">${esc(CATS[cat])}</div><div class="dex-grid">${list.filter((w) => catOf(w) === cat).map((w) => S.dex[w]
     ? `<button class="dex-cell got" data-w="${esc(w)}"><div class="dex-pic">${itemSVG(w)}</div><div class="dex-word">${esc(w)}</div></button>`
-    : `<div class="dex-cell"><div class="dex-pic shadow">${itemSVG(w)}</div><div class="dex-word">?</div></div>`).join('')}</div>`;
-  const node = modal(root, 'dex-panel', `<div class="panel-title">글자 도감 <small>${got} / ${words.length}</small></div><div class="dex-scroll">${sec('basic')}${sec('compound')}</div>`);
+    : `<div class="dex-cell"><div class="dex-pic shadow">${itemSVG(w)}</div><div class="dex-word">?</div></div>`).join('')}</div>`; }
+  const node = modal(root, 'dex-panel', `<div class="panel-title">글자 도감 <small>${got} / ${words.length}</small></div><div class="dex-scroll">${secs}</div>`);
   node.querySelectorAll('.dex-cell.got').forEach((c) => onTap(c, () => { say(c.dataset.w); c.classList.remove('boing'); void c.offsetWidth; c.classList.add('boing'); }));
   if (got === words.length) { confetti(); say('도감을 다 모았어! 대단해!'); }
 }

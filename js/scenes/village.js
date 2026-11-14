@@ -3,7 +3,8 @@ import { S, save, addInv } from '../state.js';
 import { el, onTap, speech, toStage, toast, esc, pick, shake } from '../ui.js';
 import { villageBG, catSVG, avatarSVG, itemSVG, decorSVG, DECOR, starSVG, boardSVG, brushSVG, shopSVG, bookSVG, gearSVG, lockSVG } from '../art.js';
 import { say, sfx } from '../audio.js';
-import { refreshBoard, nextStory, bossReady, fill } from '../quests.js';
+import { refreshBoard, nextStory, bossReady, fill, villageLook, canAdvance, advanceChapter, CHAPTER_INTRO, isCleared } from '../quests.js';
+import { CHAPTERS, LAST_CHAPTER } from '../words.js';
 import { openBoard, openShop, openDex } from './panels.js';
 import { openParent } from './parent.js';
 import { checkGate } from '../gate.js';
@@ -53,9 +54,11 @@ export function villageScene(root) {
   const placedLayer = $('.vplaced');
 
   function drawHud() {
-    $('.vbg').innerHTML = villageBG(S.restore);
-    $('.vbg').style.filter = `grayscale(${(100 - S.restore) * 0.9}%)`;
-    $('.vfog').style.display = S.restore >= ZONE3_OPEN ? 'none' : '';
+    const v = villageLook();
+    $('.vbg').innerHTML = villageBG(v.restore, v.opts);
+    $('.vbg').style.filter = `grayscale(${v.gray}%)`;
+    $('.vfog').style.display = zone3Open() ? 'none' : '';
+    $('.hud-restore span').textContent = CHAPTERS[S.chapter]?.progress || '마을 복원';
     $('.hud-restore i').style.width = S.restore + '%';
     $('.hud-restore b').textContent = S.restore + '%';
     $('.hud-stars b').textContent = S.stars;
@@ -83,7 +86,8 @@ export function villageScene(root) {
     });
   }
 
-  const validSpot = (x, y) => y >= GROUND_TOP && y <= (decorating ? DRAWER_TOP - 20 : GROUND_BOTTOM) && x >= 40 && x <= 1140 && (S.restore >= ZONE3_OPEN || x < ZONE3_X - 30);
+  const zone3Open = () => S.chapter > 1 || S.restore >= ZONE3_OPEN;
+  const validSpot = (x, y) => y >= GROUND_TOP && y <= (decorating ? DRAWER_TOP - 20 : GROUND_BOTTOM) && x >= 40 && x <= 1140 && (zone3Open() || x < ZONE3_X - 30);
   const overTrash = (x, y) => (x > 1020 && y > 560 && y < 664) || y > DRAWER_TOP;
 
   // ── 마을에 놓인 물건: 꾸미기 중엔 끌기, 아니면 이름 듣기
@@ -124,7 +128,7 @@ export function villageScene(root) {
         p.x = Math.round(q.x); p.y = Math.round(q.y);
       } else {
         p.x = start.x; p.y = start.y;
-        if (q.x >= ZONE3_X - 30 && S.restore < ZONE3_OPEN) toast('놀이터는 아직 잠겨 있어요');
+        if (q.x >= ZONE3_X - 30 && !zone3Open()) toast('놀이터는 아직 잠겨 있어요');
       }
       save();
       drawPlaced();
@@ -160,7 +164,7 @@ export function villageScene(root) {
         const q = toStage(ev);
         ghost.remove();
         if (validSpot(q.x, q.y)) place(key, q.x, q.y);
-        else if (q.x >= ZONE3_X - 30 && S.restore < ZONE3_OPEN) toast('놀이터는 아직 잠겨 있어요');
+        else if (q.x >= ZONE3_X - 30 && !zone3Open()) toast('놀이터는 아직 잠겨 있어요');
       } else if (!moved && ev.type === 'pointerup') {
         const spot = freeSpot();
         place(key, spot.x, spot.y);
@@ -172,7 +176,7 @@ export function villageScene(root) {
   }
 
   function freeSpot() {
-    const maxX = S.restore >= ZONE3_OPEN ? 1100 : ZONE3_X - 60;
+    const maxX = zone3Open() ? 1100 : ZONE3_X - 60;
     for (let t = 0; t < 40; t++) {
       const x = 80 + Math.random() * (maxX - 80), y = 500 + Math.random() * 130;
       const behindChars = x > 170 && x < 440 && y < 620; // 주인공과 꼬리 뒤는 피함
@@ -223,7 +227,21 @@ export function villageScene(root) {
   drawHud();
   drawPlaced();
 
-  if (!S.flags.villageIntro) {
+  // 챕터를 깼으면 다음 챕터로 (이야기와 함께)
+  if (canAdvance()) {
+    (async () => {
+      const next = S.chapter + 1;
+      for (const l of CHAPTER_INTRO[next] || []) await speech({ ...l, text: fill(l.text) });
+      advanceChapter();
+      drawHud();
+      await speech({ who: 'kkori', mood: 'wow', text: `${next}챕터 ${CHAPTERS[next].name}! 게시판에서 첫 의뢰를 골라 봐!` });
+      $('.vbtn.board').classList.add('glow');
+    })();
+  } else if (isCleared(S.chapter) && S.chapter === LAST_CHAPTER && !S.flags['waitCh' + (S.chapter + 1)]) {
+    S.flags['waitCh' + (S.chapter + 1)] = true;
+    save();
+    speech({ who: 'kkori', text: `${S.chapter + 1}챕터는 곧 열려! 그동안 게시판 의뢰로 별을 모으고 마을을 꾸미면서 기다리자~` });
+  } else if (!S.flags.villageIntro) {
     S.flags.villageIntro = true;
     save();
     (async () => {

@@ -1,44 +1,46 @@
 // 미니게임 7: 숨은 글자 찾기 (그림 속 자모를 찾아 글자 완성, 복모음 합치기)
 import { el, shuffle, sleep, confetti, nudge, esc } from '../ui.js';
-import { itemSVG, hiddenBG, HIDE_SPOTS } from '../art.js';
+import { itemSVG, hiddenBG, hideSpots } from '../art.js';
+import { S } from '../state.js';
 import { say, sfx, stopSay } from '../audio.js';
-import { syllables, compose, combineVowels, isCompound, VOWEL_SPLIT, SIMILAR, josa } from '../hangul.js';
+import { syllables, compose, combineVowels, isCompound, VOWEL_SPLIT, SIMILAR, SIMILAR_JONG, josa } from '../hangul.js';
 import { record, bumpSkill, skill } from '../adaptive.js';
 import { frame, confirmExit, picCard, rebind } from './common.js';
 
 export async function playHidden(root, { words, boss = false }) {
   const target = words[0];
-  const f = frame(root, { bg: hiddenBG(), title: boss ? '좀비괴물과 대결! 숨은 글자' : '그림 속에 숨은 글자를 찾아요', cls: 'hidden' });
+  const f = frame(root, { bg: hiddenBG(S.chapter), title: boss ? '좀비괴물과 대결! 숨은 글자' : '그림 속에 숨은 글자를 찾아요', cls: 'hidden' });
   f.body.innerHTML = `<div class="g-top hid-top">${picCard()}<div class="g-blocks"></div></div><div class="hid-area"></div>`;
   const $ = (s) => f.body.querySelector(s);
   const blocks = $('.g-blocks'), area = $('.hid-area');
   const sy = syllables(target);
   const ghost = skill('hidden') < 0.55; // 처음엔 찾을 모양을 흐리게 보여줌
   // 칸: 첫소리 + 가운데소리(복모음은 항상 두 조각으로 숨김)
-  const slots = sy.map((d) => ({ cho: { want: d.cho, got: '' }, jung: (isCompound(d.jung) ? VOWEL_SPLIT[d.jung] : [d.jung]).map((j) => ({ want: j, got: '' })), full: d.jung }));
-  const need = slots.flatMap((s) => [s.cho.want, ...s.jung.map((x) => x.want)]);
+  const slots = sy.map((d) => ({ cho: { want: d.cho, got: '' }, jung: (isCompound(d.jung) ? VOWEL_SPLIT[d.jung] : [d.jung]).map((j) => ({ want: j, got: '' })), full: d.jung, jong: d.jong ? { want: d.jong, got: '' } : null }));
+  const cells = (s) => [s.cho, ...s.jung, ...(s.jong ? [s.jong] : [])];
+  const need = slots.flatMap((s) => cells(s).map((x) => x.want));
   let mistakes = 0, hinted = false, done = false;
   f.node.dataset.w = target;
 
   $('.g-pic-svg').innerHTML = itemSVG(target);
   rebind($('.g-say'), () => say(target));
 
-  const remaining = () => slots.flatMap((s) => [s.cho, ...s.jung]).filter((x) => !x.got).map((x) => x.want);
+  const remaining = () => slots.flatMap(cells).filter((x) => !x.got).map((x) => x.want);
   function drawBlocks() {
     blocks.innerHTML = slots.map((s) => {
       const jungGot = s.jung.every((x) => x.got);
       const jungNow = jungGot ? s.full : s.jung.map((x) => x.got).filter(Boolean).reduce((a, b) => combineVowels(a, b) || a + b, '');
-      const big = s.cho.got && jungGot ? compose(s.cho.got, s.full) : '';
+      const big = s.cho.got && jungGot && (!s.jong || s.jong.got) ? compose(s.cho.got, s.full, s.jong ? s.jong.got : '') : '';
       const cell = (x) => `<div class="hid-slot ${x.got ? 'on' : ''}">${x.got ? esc(x.got) : ghost ? `<span class="ghost">${esc(x.want)}</span>` : '?'}</div>`;
       return `<div class="g-block"><div class="g-big ${big ? '' : 'empty'}">${esc(big || (s.cho.got || '') + (jungNow || '') || '?')}</div>
-        <div class="hid-slots">${cell(s.cho)}${s.jung.map(cell).join('')}</div></div>`;
+        <div class="hid-slots">${cell(s.cho)}${s.jung.map(cell).join('')}${s.jong ? cell(s.jong) : ''}</div></div>`;
     }).join('');
     f.node.dataset.need = remaining().join(',');
   }
 
   // 자모 숨기기
-  const decoys = shuffle([...new Set(need.flatMap((j) => SIMILAR[j] || []))].filter((j) => !need.includes(j))).slice(0, 3 + Math.round(skill('hidden') * 2));
-  const spots = shuffle(HIDE_SPOTS);
+  const decoys = shuffle([...new Set(need.flatMap((j) => [...(SIMILAR[j] || []), ...(SIMILAR_JONG[j] || [])]))].filter((j) => !need.includes(j))).slice(0, 3 + Math.round(skill('hidden') * 2));
+  const spots = shuffle(hideSpots(S.chapter));
   [...need, ...decoys].forEach((j, i) => {
     const [x, y, c] = spots[i % spots.length];
     const rot = Math.round(Math.random() * 50 - 25);
@@ -54,7 +56,7 @@ export async function playHidden(root, { words, boss = false }) {
   async function tap(b) {
     if (done || b.classList.contains('found')) return;
     const j = b.dataset.j;
-    const slot = slots.flatMap((s) => [s.cho, ...s.jung]).find((x) => !x.got && x.want === j);
+    const slot = slots.flatMap(cells).find((x) => !x.got && x.want === j);
     if (slot) {
       slot.got = j;
       b.classList.add('found');

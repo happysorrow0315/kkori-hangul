@@ -470,3 +470,12 @@ button { font-family: inherit; color: inherit; }
 .hid-piece.found { animation: found .4s forwards; }
 @keyframes found { to { transform: translate(-50%, -160%) scale(1.8); opacity: 0; } }
 .hid-tag { position: absolute; transform: translate(-50%, -130%); background: #fff; border: 3px solid var(--ink); border-radius: 14px; padding: 0 12px; font-size: 32px; z-index: 8; animation: fadein .2s; }
+
+/* 받침 칸 (2챕터) */
+.dig-slot.jong { width: 136px; height: 44px; margin-top: 2px; font-size: 32px; }
+.dig-slot.jong:not(.on) { font-size: 20px; color: rgba(90, 64, 50, .5); }
+.dig-blocks.has-jong .dig-big { height: 110px; font-size: 84px; line-height: 98px; }
+.dig-blocks.has-jong .dig-slot:not(.jong) { height: 48px; }
+.dig-blocks.has-jong .dig-block { gap: 5px; }
+.dex-ch { font-size: 32px; margin: 18px 0 4px; }
+.dex-ch small { font-size: 22px; opacity: .7; }
