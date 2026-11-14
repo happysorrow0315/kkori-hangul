@@ -272,7 +272,7 @@ export function villageLook() {
   return {
     restore,
     gray: (100 - restore) * 0.9,
-    opts: { banner: ch === 1, castle: ch > 2 || isCleared(2) || (ch === 2 && S.restore >= 50) },
+    opts: { banner: ch === 1, theme: ch, castle: ch === 1 && isCleared(2) },
   };
 }
 

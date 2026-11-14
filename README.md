@@ -39,6 +39,7 @@ node tools/serve.js          # 다른 창에서 켜 두기
 node tools/test.mjs          # 처음 시작 ~ 미니게임 3종 ~ 꾸미기 ~ 상점 ~ 부모 설정 ~ 30분 잠금
 node tools/test-chapter.mjs  # 게시판에서 골라 가며 1챕터 12개 미션 + 보스까지, 새 놀이 오답 흐름 포함
 CH=2 node tools/test-chapter.mjs  # 1챕터를 깬 기록에서 2챕터로 넘어가 끝까지
+node tools/test-decor.mjs    # 마을 꾸미기: 어울리는 자리, 잘못된 자리 거절, 서랍으로 돌려놓기, 두 테마
 ```
 스크린샷은 `tools/shots/`에 저장된다. Microsoft Edge가 설치되어 있어야 한다.
 
@@ -59,5 +60,7 @@ CH=2 node tools/test-chapter.mjs  # 1챕터를 깬 기록에서 2챕터로 넘�
 | `js/games/hidden.js` | 미니게임 7: 그림 속 숨은 글자 찾기 |
 | `js/games/boss.js` | 챕터 마지막 좀비괴물 대결 (7종 중 무작위 3종) |
 | `js/scenes/` | 시작, 처음 설정, 마을, 게시판/상점/도감, 부모 설정, 미션 진행 |
+| `js/village-data.js` | 꾸미기 자리(텃밭, 울타리, 빨랫줄...)와 물건별 어울리는 자리 |
+| `js/village-art.js` | 챕터 테마별 마을 그림 |
 | `js/gate.js` | 30분마다 부모 비밀번호 확인 |
 | `js/art.js` | 모든 그림 (SVG) |

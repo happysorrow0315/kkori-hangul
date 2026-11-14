@@ -1,18 +1,19 @@
-// 고양이 마을 (본거지): 둘러보기 + 꾸미기
+// 고양이 마을 (본거지): 둘러보기 + 어울리는 자리에 꾸미기
 import { S, save, addInv } from '../state.js';
-import { el, onTap, speech, toStage, toast, esc, pick, shake } from '../ui.js';
+import { el, onTap, speech, toStage, toast, esc, pick } from '../ui.js';
 import { villageBG, catSVG, avatarSVG, itemSVG, decorSVG, DECOR, starSVG, boardSVG, brushSVG, shopSVG, bookSVG, gearSVG, lockSVG } from '../art.js';
 import { say, sfx } from '../audio.js';
 import { refreshBoard, nextStory, bossReady, fill, villageLook, canAdvance, advanceChapter, CHAPTER_INTRO, isCleared } from '../quests.js';
 import { CHAPTERS, LAST_CHAPTER } from '../words.js';
+import { josa } from '../hangul.js';
+import { SPOTS, FREE_AREA, FREE_ZONES, homeOf, spotAt, inArea, TOY_MOTION, SKY_MOTION, TREASURE } from '../village-data.js';
 import { openBoard, openShop, openDex } from './panels.js';
 import { openParent } from './parent.js';
 import { checkGate } from '../gate.js';
 
-const ZONE3_X = 786;
+const LOCK_X = 716; // 1챕터에서 복원 50% 전까지 잠긴 오른쪽 구역
 const ZONE3_OPEN = 50;
-const GROUND_TOP = 470, GROUND_BOTTOM = 790;
-const DRAWER_TOP = 664;
+const CHAR_AREA = [330, 430, 476, 610]; // 주인공과 꼬리가 서 있는 곳
 
 const itemArt = (key) => {
   const [kind, k] = key.split(':');
@@ -22,14 +23,29 @@ const itemName = (key) => {
   const [kind, k] = key.split(':');
   return kind === 'word' ? k : DECOR[k]?.name || '';
 };
+const SPROUT = '<svg viewBox="0 0 40 40"><path d="M20 38 V20" stroke="#4f9a4a" stroke-width="4" fill="none"/><path d="M20 22 C10 22 6 14 8 8 C16 8 20 14 20 22Z M20 18 C28 18 34 12 32 6 C24 6 20 12 20 18Z" fill="#7cc576" stroke="#5a4032" stroke-width="2"/></svg>';
+
+const PLACED_SAY = {
+  garden: (n) => `${josa(n, '을/를')} 심었다! 쑥쑥 자라라~`,
+  pen: (n) => `${josa(n, '이/가')} 울타리에 들어왔어!`,
+  line: (n) => `${josa(n, '을/를')} 빨랫줄에 걸었어!`,
+  mat: (n) => `${josa(n, '을/를')} 돗자리에 차렸어!`,
+  toys: (n) => `${josa(n, '을/를')} 놀이터에 놓았어!`,
+  sky: (n) => `${josa(n, '을/를')} 하늘에 띄웠어!`,
+  shelf: (n) => `${josa(n, '을/를')} 선반에 올렸어!`,
+  free: (n) => n,
+};
 
 export function villageScene(root) {
   refreshBoard();
   checkGate();
+  migratePlaced();
   let decorating = false;
+  let raf = 0;
   const node = el(`<div class="village">
     <div class="vbg"></div>
-    <div class="vfog"><div class="vfog-lock">${lockSVG()}</div><div class="vfog-text">마을 복원 ${ZONE3_OPEN}%가 되면<br>놀이터가 열려요</div></div>
+    <div class="vzones"></div>
+    <div class="vfog"><div class="vfog-lock">${lockSVG()}</div><div class="vfog-text">마을 복원 ${ZONE3_OPEN}%가 되면<br>놀이터와 울타리가 열려요</div></div>
     <div class="vplaced"></div>
     <div class="vchar me">${avatarSVG(S.profile?.avatar)}</div>
     <div class="vchar cat"></div>
@@ -45,13 +61,27 @@ export function villageScene(root) {
       <button class="vbtn dex"><span class="vicon">${bookSVG()}</span>도감</button>
     </div>
     <button class="parent-btn" aria-label="부모 설정">${gearSVG()}</button>
-    <div class="drawer"><div class="drawer-list"></div><div class="drawer-hint">물건을 위로 끌어서 마을에 놓아요</div></div>
-    <div class="trash">치우기</div>
-    <button class="btn deco-done">꾸미기 끝!</button>
+    <div class="vdrawer">
+      <div class="vdrawer-title">물건 서랍</div>
+      <div class="vdrawer-list"></div>
+      <button class="btn mint deco-done">꾸미기 끝!</button>
+    </div>
   </div>`);
   root.appendChild(node);
   const $ = (s) => node.querySelector(s);
   const placedLayer = $('.vplaced');
+  const zonesEl = $('.vzones');
+
+  const zone3Open = () => S.chapter > 1 || S.restore >= ZONE3_OPEN;
+  const locked = (x, y) => !zone3Open() && x >= LOCK_X && y >= 430;
+
+  // ── 자리 표시 (꾸미기 중에만 보임)
+  zonesEl.innerHTML = Object.entries(SPOTS).map(([id, s]) => {
+    const [x0, y0, x1, y1] = s.area;
+    return `<div class="spot-zone" data-spot="${id}" style="left:${x0}px;top:${y0}px;width:${x1 - x0}px;height:${y1 - y0}px"><span>${esc(s.label)}</span></div>`;
+  }).join('') + FREE_ZONES.map(([x0, y0, x1, y1], i) => `<div class="spot-zone free-zone" style="left:${x0}px;top:${y0}px;width:${x1 - x0}px;height:${y1 - y0}px">${i ? '<span>빈 땅</span>' : ''}</div>`).join('');
+  const zoneEl = (id) => zonesEl.querySelector(`[data-spot="${id}"]`);
+  const flashZone = (id) => { const z = zoneEl(id); if (!z) return; z.classList.remove('flash'); void z.offsetWidth; z.classList.add('flash'); };
 
   function drawHud() {
     const v = villageLook();
@@ -66,69 +96,221 @@ export function villageScene(root) {
     $('.vbtn.board .badge').style.display = nextStory() || bossReady() ? '' : 'none';
   }
 
-  function drawPlaced() {
+  // ── 놓인 물건 그리기
+  const walkers = new Map(); // 울타리 동물 움직임
+  function sizeOf(p) {
+    if (p.spot === 'free') return p.key.startsWith('decor') ? 92 : 76;
+    return SPOTS[p.spot].size;
+  }
+  function posOf(p) {
+    if (p.spot === 'free' || p.spot === 'pen') return { x: p.x, y: p.y };
+    const [x, y] = SPOTS[p.spot].slots[p.i] || [p.x || 500, p.y || 600];
+    return { x, y };
+  }
+  function motionOf(p) {
+    const w = p.key.split(':')[1];
+    if (p.spot === 'toys') return TOY_MOTION[w] || 'bounce';
+    if (p.spot === 'sky') return SKY_MOTION[w] || 'twinkle';
+    if (p.spot === 'line') return 'sway';
+    if (p.spot === 'pen') return 'bob';
+    if (p.spot === 'shelf' && TREASURE.includes(w)) return 'treasure';
+    if (p.spot === 'garden') return 'breeze';
+    return '';
+  }
+  function drawPlaced(fresh = null) {
     placedLayer.innerHTML = '';
-    [...S.placed].sort((a, b) => a.y - b.y).forEach((p) => {
-      const d = el(`<div class="placed ${p.key.startsWith('decor') ? 'decor' : ''}" data-id="${p.id}" style="left:${p.x}px;top:${p.y}px">${itemArt(p.key)}</div>`);
+    for (const p of S.placed) {
+      const { x, y } = posOf(p);
+      const sz = sizeOf(p);
+      const d = el(`<div class="placed spot-${p.spot} ${fresh === p.id ? 'new' : ''}" data-id="${p.id}" style="left:${x}px;top:${y}px;width:${sz}px;height:${sz}px;z-index:${Math.round(y)}">
+        <div class="pin m-${motionOf(p)}" style="animation-delay:-${(p.id.charCodeAt(p.id.length - 1) % 10) / 10}s">${itemArt(p.key)}</div>
+        ${fresh === p.id && p.spot === 'garden' ? `<div class="sprout">${SPROUT}</div>` : ''}</div>`);
       d.addEventListener('pointerdown', (e) => onPlacedDown(e, d, p));
       placedLayer.appendChild(d);
-    });
+      if (p.spot === 'pen') {
+        const old = walkers.get(p.id);
+        walkers.set(p.id, { p, d, x: old?.x ?? x, y: old?.y ?? y, tx: x, ty: y, wait: Math.random() * 2, v: 22 + Math.random() * 18 });
+      }
+    }
+    for (const id of [...walkers.keys()]) if (!S.placed.some((p) => p.id === id)) walkers.delete(id);
   }
 
+  // 울타리 동물이 돌아다님
+  let lastT = 0;
+  function tick(t) {
+    const dt = lastT ? Math.min(0.05, (t - lastT) / 1000) : 0;
+    lastT = t;
+    const [x0, y0, x1, y1] = SPOTS.pen.area;
+    const m = SPOTS.pen.size / 2 + 8;
+    for (const w of walkers.values()) {
+      if (w.drag) continue;
+      if (w.wait > 0) { w.wait -= dt; continue; }
+      const dx = w.tx - w.x, dy = w.ty - w.y, dist = Math.hypot(dx, dy);
+      if (dist < 2) {
+        w.wait = 1 + Math.random() * 3;
+        w.tx = x0 + m + Math.random() * (x1 - x0 - 2 * m);
+        w.ty = y0 + m + Math.random() * (y1 - y0 - 2 * m);
+        continue;
+      }
+      const step = Math.min(dist, w.v * dt);
+      w.x += (dx / dist) * step; w.y += (dy / dist) * step;
+      w.p.x = Math.round(w.x); w.p.y = Math.round(w.y);
+      w.d.style.left = w.x + 'px'; w.d.style.top = w.y + 'px'; w.d.style.zIndex = Math.round(w.y);
+      w.d.classList.toggle('flip', dx > 0);
+    }
+    raf = requestAnimationFrame(tick);
+  }
+  raf = requestAnimationFrame(tick);
+
+  // ── 서랍
   function drawDrawer() {
-    const list = $('.drawer-list');
+    const list = $('.vdrawer-list');
     const keys = Object.keys(S.inventory).filter((k) => S.inventory[k] > 0);
-    list.innerHTML = keys.length ? '' : '<div class="drawer-empty">아직 물건이 없어요. 의뢰를 해결하고 물건을 되찾아요!</div>';
+    list.innerHTML = keys.length ? '' : '<div class="drawer-empty">아직 물건이 없어요.<br>의뢰를 해결하면 물건을 되찾아요!</div>';
     keys.forEach((k) => {
-      const b = el(`<div class="drawer-item" data-k="${esc(k)}"><div class="drawer-pic">${itemArt(k)}</div><div class="drawer-name">${esc(itemName(k))}</div><i>${S.inventory[k]}</i></div>`);
+      const home = homeOf(k);
+      const b = el(`<div class="drawer-item" data-k="${esc(k)}"><div class="drawer-pic">${itemArt(k)}</div><div class="drawer-name">${esc(itemName(k))}</div><i>${S.inventory[k]}</i><b class="drawer-home">${home === 'free' ? '빈 땅' : esc(SPOTS[home].label)}</b></div>`);
       b.addEventListener('pointerdown', (e) => onDrawerDown(e, b, k));
       list.appendChild(b);
     });
   }
 
-  const zone3Open = () => S.chapter > 1 || S.restore >= ZONE3_OPEN;
-  const validSpot = (x, y) => y >= GROUND_TOP && y <= (decorating ? DRAWER_TOP - 20 : GROUND_BOTTOM) && x >= 40 && x <= 1140 && (zone3Open() || x < ZONE3_X - 30);
-  const overTrash = (x, y) => (x > 1020 && y > 560 && y < 664) || y > DRAWER_TOP;
+  // ── 자리 정하기
+  const usedSlots = (spot, exceptId) => new Set(S.placed.filter((p) => p.spot === spot && p.id !== exceptId).map((p) => p.i));
+  function nearestSlot(spot, x, y, exceptId) {
+    const used = usedSlots(spot, exceptId);
+    let best = -1, bd = Infinity;
+    SPOTS[spot].slots.forEach(([sx, sy], i) => {
+      if (used.has(i)) return;
+      const d = x == null ? i : Math.hypot(sx - x, sy - y);
+      if (d < bd) { bd = d; best = i; }
+    });
+    return best;
+  }
+  const penCount = (exceptId) => S.placed.filter((p) => p.spot === 'pen' && p.id !== exceptId).length;
+  function randomIn([x0, y0, x1, y1], m) { return { x: x0 + m + Math.random() * (x1 - x0 - 2 * m), y: y0 + m + Math.random() * (y1 - y0 - 2 * m) }; }
+  const clearAt = (x, y, r = 34) => [[0, 0], [-r, -r], [r, -r], [-r, r], [r, r]].every(([dx, dy]) => !spotAt(x + dx, y + dy) && !inArea(CHAR_AREA, x + dx, y + dy) && inArea(FREE_AREA, x + dx, y + dy) && !locked(x + dx, y + dy));
+  function freeGround() {
+    for (let t = 0; t < 120; t++) {
+      const z = FREE_ZONES[t % FREE_ZONES.length];
+      const q = randomIn(z, 4);
+      if (!clearAt(q.x, q.y)) continue;
+      if (S.placed.every((p) => p.spot !== 'free' || Math.hypot(p.x - q.x, p.y - q.y) > 60) || t > 80) return q;
+    }
+    return { x: 390, y: 700 };
+  }
 
-  // ── 마을에 놓인 물건: 꾸미기 중엔 끌기, 아니면 이름 듣기
+  // 놓을 자리 결정: {spot, i} 또는 {spot:'free'|'pen', x, y}, 안 되면 {err}
+  function resolveDrop(key, x, y, exceptId) {
+    const home = homeOf(key);
+    const name = itemName(key);
+    if (locked(x, y)) return { err: '이쪽은 아직 잠겨 있어요' };
+    const at = spotAt(x, y);
+    if (home === 'free') {
+      if (!at && clearAt(x, y, 26)) return { spot: 'free', x: Math.round(x), y: Math.round(y) };
+      return { err: `${josa(name, '은/는')} 빈 땅에 놓아 줘!` };
+    }
+    if (at !== home) return { err: `${josa(name, '은/는')} ${SPOTS[home].label}에 놓아 줘!`, flash: home };
+    if (home === 'pen') {
+      if (penCount(exceptId) >= SPOTS.pen.max) return { err: '울타리가 꽉 찼어!' };
+      const m = SPOTS.pen.size / 2 + 6, [x0, y0, x1, y1] = SPOTS.pen.area;
+      return { spot: 'pen', x: Math.round(Math.max(x0 + m, Math.min(x1 - m, x))), y: Math.round(Math.max(y0 + m, Math.min(y1 - m, y))) };
+    }
+    const i = nearestSlot(home, x, y, exceptId);
+    if (i < 0) return { err: `${josa(SPOTS[home].label, '이/가')} 꽉 찼어!` };
+    return { spot: home, i };
+  }
+  function autoDrop(key) {
+    const home = homeOf(key);
+    if (home === 'free') return { spot: 'free', ...freeGround() };
+    if (locked(SPOTS[home].area[0], SPOTS[home].area[1] + 10)) return { err: `${josa(SPOTS[home].label, '은/는')} 마을 복원 ${ZONE3_OPEN}%에 열려요` };
+    if (home === 'pen') {
+      if (penCount() >= SPOTS.pen.max) return { err: '울타리가 꽉 찼어!' };
+      const q = randomIn(SPOTS.pen.area, SPOTS.pen.size / 2 + 8);
+      return { spot: 'pen', x: Math.round(q.x), y: Math.round(q.y) };
+    }
+    const i = nearestSlot(home);
+    if (i < 0) return { err: `${josa(SPOTS[home].label, '이/가')} 꽉 찼어!` };
+    return { spot: home, i };
+  }
+  function failDrop(r) {
+    sfx('bad');
+    toast(r.err);
+    if (r.flash) flashZone(r.flash);
+    say(r.err);
+  }
+
+  function placeNew(key, r) {
+    if (!S.inventory[key]) return;
+    addInv(key, -1);
+    const p = { id: 'p' + Date.now() + Math.floor(Math.random() * 999), key, spot: r.spot };
+    if (r.i != null) p.i = r.i; else { p.x = r.x; p.y = r.y; }
+    S.placed.push(p);
+    save();
+    sfx(r.spot === 'garden' ? 'magic' : 'pop');
+    say(PLACED_SAY[r.spot](itemName(key)));
+    drawPlaced(p.id);
+    drawDrawer();
+  }
+
+  // ── 하이라이트
+  const highlight = (key) => {
+    const home = homeOf(key);
+    zonesEl.querySelectorAll('.spot-zone').forEach((z) => z.classList.toggle('hot', z.dataset.spot === home));
+    node.classList.toggle('free-hot', home === 'free');
+    zonesEl.querySelectorAll('.free-zone').forEach((z) => z.classList.toggle('hot', home === 'free'));
+  };
+  const unhighlight = () => { zonesEl.querySelectorAll('.spot-zone').forEach((z) => z.classList.remove('hot')); node.classList.remove('free-hot'); };
+
+  // ── 놓인 물건: 꾸미기 중엔 옮기기/치우기, 아니면 이름 듣기
   function onPlacedDown(e, d, p) {
     if (!decorating) {
       sfx('pop');
-      d.classList.remove('boing');
-      void d.offsetWidth;
-      d.classList.add('boing');
+      const pin = d.querySelector('.pin');
+      pin.classList.remove('boing'); void pin.offsetWidth; pin.classList.add('boing');
       const name = itemName(p.key);
       say(name);
-      const tag = el(`<div class="name-tag" style="left:${p.x}px;top:${p.y - 70}px">${esc(name)}</div>`);
+      const { x, y } = posOf(p);
+      const tag = el(`<div class="name-tag" style="left:${x}px;top:${y - sizeOf(p) / 2 - 46}px">${esc(name)}</div>`);
       placedLayer.appendChild(tag);
       setTimeout(() => tag.remove(), 1600);
       return;
     }
     e.preventDefault();
-    const start = { x: p.x, y: p.y };
+    const w = walkers.get(p.id);
+    if (w) w.drag = true;
     d.classList.add('dragging');
+    d.style.zIndex = 2000;
     d.setPointerCapture?.(e.pointerId);
+    highlight(p.key);
     const move = (ev) => {
       const q = toStage(ev);
       d.style.left = q.x + 'px';
       d.style.top = q.y + 'px';
-      node.querySelector('.trash').classList.toggle('hot', overTrash(q.x, q.y));
+      $('.vdrawer').classList.toggle('hot', q.x > 1036);
     };
     const up = (ev) => {
       d.removeEventListener('pointermove', move);
       d.removeEventListener('pointerup', up);
       d.removeEventListener('pointercancel', up);
-      node.querySelector('.trash').classList.remove('hot');
+      unhighlight();
+      $('.vdrawer').classList.remove('hot');
+      if (w) w.drag = false;
       const q = toStage(ev);
-      if (overTrash(q.x, q.y)) {
+      if (q.x > 1036) {
+        // 서랍으로 돌려놓기
         S.placed = S.placed.filter((x) => x.id !== p.id);
         addInv(p.key, 1);
         sfx('pop');
-      } else if (validSpot(q.x, q.y)) {
-        p.x = Math.round(q.x); p.y = Math.round(q.y);
       } else {
-        p.x = start.x; p.y = start.y;
-        if (q.x >= ZONE3_X - 30 && !zone3Open()) toast('놀이터는 아직 잠겨 있어요');
+        const r = resolveDrop(p.key, q.x, q.y, p.id);
+        if (r.err) failDrop(r);
+        else {
+          p.spot = r.spot;
+          if (r.i != null) { p.i = r.i; delete p.x; delete p.y; } else { p.x = r.x; p.y = r.y; delete p.i; }
+          if (w) { w.x = p.x; w.y = p.y; w.tx = p.x; w.ty = p.y; w.wait = 1; }
+          sfx('pop');
+        }
       }
       save();
       drawPlaced();
@@ -139,7 +321,7 @@ export function villageScene(root) {
     d.addEventListener('pointercancel', up);
   }
 
-  // ── 서랍에서 꺼내기: 위로 끌면 놓기, 그냥 누르면 빈자리에 자동으로 놓기
+  // ── 서랍에서 꺼내기: 왼쪽으로 끌면 원하는 곳에, 그냥 누르면 어울리는 자리에 자동으로
   function onDrawerDown(e, b, key) {
     const s0 = toStage(e);
     let ghost = null, moved = false;
@@ -147,9 +329,10 @@ export function villageScene(root) {
       const q = toStage(ev);
       if (!ghost) {
         if (Math.abs(q.x - s0.x) > 10 || Math.abs(q.y - s0.y) > 10) moved = true;
-        if (s0.y - q.y > 14) {
-          ghost = el(`<div class="placed dragging ${key.startsWith('decor') ? 'decor' : ''}">${itemArt(key)}</div>`);
+        if (s0.x - q.x > 14) {
+          ghost = el(`<div class="placed dragging" style="width:90px;height:90px;z-index:2000"><div class="pin">${itemArt(key)}</div></div>`);
           placedLayer.appendChild(ghost);
+          highlight(key);
         } else return;
       }
       ghost.style.left = q.x + 'px';
@@ -163,11 +346,13 @@ export function villageScene(root) {
       if (ghost) {
         const q = toStage(ev);
         ghost.remove();
-        if (validSpot(q.x, q.y)) place(key, q.x, q.y);
-        else if (q.x >= ZONE3_X - 30 && !zone3Open()) toast('놀이터는 아직 잠겨 있어요');
+        unhighlight();
+        if (q.x > 1036) return;
+        const r = resolveDrop(key, q.x, q.y);
+        if (r.err) failDrop(r); else placeNew(key, r);
       } else if (!moved && ev.type === 'pointerup') {
-        const spot = freeSpot();
-        place(key, spot.x, spot.y);
+        const r = autoDrop(key);
+        if (r.err) failDrop(r); else placeNew(key, r);
       }
     };
     window.addEventListener('pointermove', move, { passive: false });
@@ -175,31 +360,13 @@ export function villageScene(root) {
     window.addEventListener('pointercancel', up);
   }
 
-  function freeSpot() {
-    const maxX = zone3Open() ? 1100 : ZONE3_X - 60;
-    for (let t = 0; t < 40; t++) {
-      const x = 80 + Math.random() * (maxX - 80), y = 500 + Math.random() * 130;
-      const behindChars = x > 170 && x < 440 && y < 620; // 주인공과 꼬리 뒤는 피함
-      if (!behindChars && S.placed.every((p) => Math.hypot(p.x - x, p.y - y) > 70)) return { x, y };
-    }
-    return { x: 300, y: 560 };
-  }
-
-  function place(key, x, y) {
-    if (!S.inventory[key]) return;
-    addInv(key, -1);
-    S.placed.push({ id: 'p' + Date.now() + Math.floor(Math.random() * 999), key, x: Math.round(x), y: Math.round(y) });
-    save();
-    sfx('pop');
-    say(itemName(key));
-    drawPlaced();
-    drawDrawer();
-  }
-
   function setDecorating(v) {
     decorating = v;
     node.classList.toggle('decorating', v);
-    if (v) { drawDrawer(); say('물건을 위로 쭉 끌어서 마을에 놓아 봐!'); }
+    if (v) {
+      drawDrawer();
+      say('물건마다 어울리는 자리가 있어! 물건을 끌면 어디에 놓을지 반짝반짝 알려 줄게~');
+    }
   }
 
   onTap($('.vbtn.board'), () => openBoard(root));
@@ -213,7 +380,7 @@ export function villageScene(root) {
     c.classList.remove('boing'); void c.offsetWidth; c.classList.add('boing');
     const lines = [
       '헤헤, 물건을 콕 누르면 이름을 알려 줄게!',
-      '꾸미기를 누르면 되찾은 물건으로 마을을 꾸밀 수 있어. 어디에 놓을까~?',
+      '꾸미기를 누르면 되찾은 물건을 어울리는 자리에 놓을 수 있어. 과일은 텃밭에, 동물은 울타리에!',
       '음~ 별을 모아서 상점에서 나한테 모자 사 줄래? 헤헤.',
       '도감을 열면 지금까지 모은 글자를 볼 수 있어!',
       '오늘은 어떤 의뢰를 해 볼까? 게시판을 열어 봐!',
@@ -234,8 +401,16 @@ export function villageScene(root) {
       for (const l of CHAPTER_INTRO[next] || []) await speech({ ...l, text: fill(l.text) });
       advanceChapter();
       drawHud();
-      await speech({ who: 'kkori', mood: 'wow', text: `${next}챕터 ${CHAPTERS[next].name}! 게시판에서 첫 의뢰를 골라 봐!` });
+      await speech({ who: 'kkori', mood: 'wow', text: `우와~ 마을도 ${CHAPTERS[next].name}처럼 바뀌었어! 게시판에서 첫 의뢰를 골라 봐!` });
       $('.vbtn.board').classList.add('glow');
+    })();
+  } else if (S.flags.decorNews) {
+    delete S.flags.decorNews;
+    save();
+    (async () => {
+      await speech({ who: 'kkori', mood: 'wow', text: '짠! 새로운 꾸미기가 생겼어. 물건마다 어울리는 자리가 있대!' });
+      await speech({ who: 'kkori', text: '과일은 텃밭에 심으면 쑥쑥 자라고, 동물은 울타리에서 뛰어놀고, 옷은 빨랫줄에 걸 수 있어. 놓아뒀던 물건은 서랍에 넣어 놨어!' });
+      $('.vbtn.deco').classList.add('glow');
     })();
   } else if (isCleared(S.chapter) && S.chapter === LAST_CHAPTER && !S.flags['waitCh' + (S.chapter + 1)]) {
     S.flags['waitCh' + (S.chapter + 1)] = true;
@@ -250,4 +425,19 @@ export function villageScene(root) {
       $('.vbtn.board').classList.add('glow');
     })();
   }
+
+  return () => cancelAnimationFrame(raf);
+}
+
+// 예전 방식(아무 데나 놓기)으로 놓은 물건은 한 번 서랍으로 돌려놓음
+function migratePlaced() {
+  if (S.flags.decor2) return;
+  S.flags.decor2 = true;
+  const old = S.placed.filter((p) => !p.spot);
+  if (old.length) {
+    old.forEach((p) => addInv(p.key, 1));
+    S.placed = S.placed.filter((p) => p.spot);
+    S.flags.decorNews = true;
+  } else if (S.profile && S.missionsDone > 0) S.flags.decorNews = true;
+  save();
 }

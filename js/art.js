@@ -186,58 +186,8 @@ export const shopSVG = () => wrap(`<rect x="16" y="40" width="68" height="48" rx
 export const brushSVG = () => wrap(`<path d="M62 14 L86 38 L52 72 L28 48Z" fill="#7ec4ff"/><path d="M28 48 L52 72 C46 84 30 92 14 88 C10 72 18 56 28 48Z" fill="#ff8fab"/><path d="M62 14 L74 2 L98 26 L86 38" fill="#b07a4a"/>`);
 
 // ───────────────────────── 배경 ─────────────────────────
-export function villageBG(restore = 0, opts = {}) {
-  const flowers = restore >= 25;
-  const rainbow = restore >= 75;
-  const done = restore >= 100 && opts.banner !== false;
-  const fl = (x, y, c) => `<g><path d="M${x} ${y} v14" stroke="#4f9a4a" stroke-width="3"/><circle cx="${x}" cy="${y}" r="7" fill="${c}" stroke="${O}" stroke-width="2"/><circle cx="${x}" cy="${y}" r="2.5" fill="#fff"/></g>`;
-  return `<svg viewBox="0 0 1180 820" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
-    <defs><linearGradient id="vsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9fd8ff"/><stop offset="1" stop-color="#e6f6ff"/></linearGradient></defs>
-    <rect width="1180" height="820" fill="url(#vsky)"/>
-    ${rainbow ? `<g fill="none" stroke-width="22" opacity=".75"><path d="M120 470 A470 380 0 0 1 1060 470" stroke="#ff8fab"/><path d="M142 470 A448 358 0 0 1 1038 470" stroke="#ffd166"/><path d="M164 470 A426 336 0 0 1 1016 470" stroke="#9be29b"/><path d="M186 470 A404 314 0 0 1 994 470" stroke="#7ec4ff"/><path d="M208 470 A382 292 0 0 1 972 470" stroke="#b69cff"/></g>` : ''}
-    <circle cx="1060" cy="100" r="54" fill="#ffe27a" stroke="#f5c542" stroke-width="5"/>
-    <g fill="#fff" opacity=".95"><ellipse cx="200" cy="110" rx="70" ry="28"/><ellipse cx="250" cy="96" rx="46" ry="30"/><ellipse cx="640" cy="80" rx="80" ry="26"/><ellipse cx="690" cy="66" rx="44" ry="28"/></g>
-    <path d="M0 400 C160 320 300 360 420 380 C560 300 760 330 900 370 C1000 330 1100 340 1180 360 V820 H0Z" fill="#b7e4a0"/>
-    ${opts.castle ? castle(303, 442, 0.55) : ''}
-    <path d="M0 450 C200 420 400 440 600 430 C800 420 1000 440 1180 430 V820 H0Z" fill="#9fd88a"/>
-    <path d="M560 820 C540 700 640 640 600 540 C580 490 520 470 470 455 M600 540 C680 520 800 500 900 470" fill="none" stroke="#f1d9a8" stroke-width="46" stroke-linecap="round"/>
-    <!-- 꼬리네 집 -->
-    <g stroke="${O}" stroke-width="4" stroke-linejoin="round">
-      <rect x="70" y="270" width="210" height="170" rx="8" fill="#fff1d6"/>
-      <path d="M50 280 L175 180 L300 280Z" fill="#ff8fa3"/>
-      <rect x="235" y="190" width="26" height="50" fill="#c9824a"/>
-      <rect x="150" y="350" width="52" height="90" rx="20" fill="#c9824a"/>
-      <circle cx="191" cy="398" r="4" fill="#ffd34d"/>
-      <rect x="92" y="310" width="44" height="40" rx="6" fill="#bfe6ff"/>
-      <rect x="218" y="310" width="44" height="40" rx="6" fill="#bfe6ff"/>
-      <path d="M114 310 V350 M92 330 H136 M240 310 V350 M218 330 H262" stroke-width="3"/>
-    </g>
-    <text x="175" y="255" font-size="26" text-anchor="middle" fill="#fff" stroke="${O}" stroke-width="6" paint-order="stroke" font-family="Jua">꼬리네 집</text>
-    <!-- 곰 아저씨네 가게 -->
-    <g stroke="${O}" stroke-width="4" stroke-linejoin="round">
-      <rect x="430" y="250" width="240" height="190" rx="8" fill="#fff6e6"/>
-      <path d="M415 260 L432 210 H668 L685 260Z" fill="#7cc576"/>
-      <path d="M468 210 L460 260 M510 210 L506 260 M550 210 L550 260 M590 210 L594 260 M630 210 L640 260" stroke="#fff" stroke-width="8"/>
-      <path d="M415 260 Q438 280 461 260 Q484 280 507 260 Q530 280 553 260 Q576 280 599 260 Q622 280 645 260 Q665 278 685 260" fill="#7cc576"/>
-      <rect x="455" y="300" width="80" height="70" rx="6" fill="#bfe6ff"/>
-      <rect x="575" y="320" width="70" height="120" rx="8" fill="#c9824a"/>
-      <rect x="455" y="158" width="190" height="46" rx="12" fill="#ffd166"/>
-    </g>
-    <text x="550" y="191" font-size="24" text-anchor="middle" fill="${O}" font-family="Jua">곰 아저씨네 가게</text>
-    <!-- 놀이터 -->
-    <g stroke="${O}" stroke-width="4" stroke-linejoin="round">
-      <path d="M840 440 L870 280 L900 440 M1000 440 L1030 280 L1060 440" fill="none" stroke="#ff8fa3" stroke-width="10"/>
-      <path d="M860 284 H1040" stroke="#ff8fa3" stroke-width="10"/>
-      <path d="M930 290 V380 M970 290 V380" stroke-width="3"/>
-      <rect x="920" y="378" width="60" height="12" rx="4" fill="#ffd166"/>
-      <path d="M1080 440 L1080 330 L1110 330 L1110 440" fill="none" stroke="#7ec4ff" stroke-width="8"/>
-      <path d="M1110 340 Q1150 380 1170 440" fill="none" stroke="#ffd166" stroke-width="16"/>
-      <circle cx="790" cy="300" r="60" fill="#7cc576"/><rect x="780" y="350" width="20" height="90" fill="#b07a4a"/>
-    </g>
-    ${flowers ? [fl(40, 470, '#ff8fab'), fl(330, 480, '#ffe066'), fl(700, 470, '#b69cff'), fl(760, 520, '#ff9f43'), fl(380, 760, '#ff8fab'), fl(1120, 760, '#ffe066'), fl(980, 500, '#ff8fab')].join('') : ''}
-    ${done ? `<g font-family="Jua"><rect x="440" y="92" width="300" height="56" rx="28" fill="#fff" stroke="${O}" stroke-width="4"/><text x="590" y="130" font-size="30" text-anchor="middle" fill="#ff6fa0">동화 숲 마을 복원 완료!</text></g>` : ''}
-  </svg>`;
-}
+// 마을 배경은 village-art.js (챕터 테마 + 꾸미기 자리)
+export { villageBG } from './village-art.js';
 
 export function martBG(ch = 1) {
   const m = ch >= 2;

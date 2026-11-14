@@ -22,7 +22,7 @@ function askName(root) {
   return new Promise((resolve) => {
     root.innerHTML = '';
     const node = el(`<div class="onb">
-      <div class="onb-bg">${villageBG(100, { banner: false })}</div>
+      <div class="onb-bg">${villageBG(100, { banner: false, spots: false })}</div>
       <div class="onb-cat">${catSVG({ mood: 'happy' })}</div>
       <div class="panel onb-panel">
         <div class="onb-q">안녕~ 나는 꼬리야!<br>너의 이름은 뭐야?</div>
@@ -51,7 +51,7 @@ function makeAvatar(root, name) {
     ];
     const hairNames = { bob: '단발', pigtails: '양갈래', long: '긴 머리' };
     const node = el(`<div class="onb">
-      <div class="onb-bg">${villageBG(100, { banner: false })}</div>
+      <div class="onb-bg">${villageBG(100, { banner: false, spots: false })}</div>
       <div class="panel avatar-panel">
         <div class="avatar-preview"></div>
         <div class="avatar-opts">
@@ -78,7 +78,7 @@ function makeAvatar(root, name) {
 async function opening(root) {
   root.innerHTML = '';
   const node = el(`<div class="opening">
-    <div class="opening-bg">${villageBG(100, { banner: false })}</div>
+    <div class="opening-bg">${villageBG(100, { banner: false, spots: false })}</div>
     <div class="opening-zombie">${zombieSVG('evil')}</div>
   </div>`);
   root.appendChild(node);

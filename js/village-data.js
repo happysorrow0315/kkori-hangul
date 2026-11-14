@@ -1,0 +1,78 @@
+// 마을 꾸미기: 물건마다 어울리는 자리와 마을 배치 (모든 테마가 같은 배치를 씀)
+
+// 자리 정의. area = [x0, y0, x1, y1] (화면 좌표), slots = 물건이 놓이는 칸
+export const SPOTS = {
+  sky: {
+    label: '하늘', size: 66,
+    area: [330, 92, 1010, 212],
+    slots: [[372, 142], [466, 124], [566, 122], [690, 152], [790, 124], [890, 160], [975, 122]],
+  },
+  line: {
+    label: '빨랫줄', size: 60,
+    area: [36, 448, 334, 588],
+    slots: [[78, 520], [124, 526], [170, 530], [216, 530], [262, 526], [306, 520]],
+  },
+  garden: {
+    label: '텃밭', size: 62,
+    area: [28, 606, 340, 798],
+    slots: [[72, 650], [146, 650], [220, 650], [294, 650], [72, 742], [146, 742], [220, 742], [294, 742]],
+  },
+  shelf: {
+    label: '선반', size: 50,
+    area: [426, 444, 684, 554],
+    slots: [[458, 474], [511, 474], [564, 474], [617, 474], [668, 474], [458, 530], [511, 530], [564, 530], [617, 530], [668, 530]],
+  },
+  mat: {
+    label: '소풍 돗자리', size: 60,
+    area: [440, 578, 694, 724],
+    slots: [[492, 614], [567, 614], [642, 614], [492, 688], [567, 688], [642, 688]],
+  },
+  toys: {
+    label: '놀이터', size: 60,
+    area: [716, 448, 1032, 548],
+    slots: [[760, 498], [826, 498], [892, 498], [958, 498], [1000, 498]],
+  },
+  pen: {
+    label: '동물 울타리', size: 70, wander: true, max: 12,
+    area: [716, 566, 1032, 798],
+  },
+};
+SPOTS.toys.slots[4] = [1004, 498];
+
+export const FREE_AREA = [30, 450, 1032, 798]; // 아무 땅 (자리 칸 밖)
+// 꾸미기 중 '빈 땅'으로 보여줄 곳
+export const FREE_ZONES = [[344, 612, 436, 798], [440, 730, 712, 798]];
+
+const HOME = {
+  garden: ['포도', '토마토', '오이', '고구마', '바나나', '사과', '수박', '감', '귤', '콩', '밤'],
+  pen: ['거미', '나비', '오리', '하마', '여우', '쿼카', '쥐', '돼지', '왜가리', '곰', '용', '기린', '사슴', '호랑이'],
+  line: ['모자', '바지', '치마', '구두', '외투', '스웨터', '양말'],
+  mat: ['우유', '피자', '과자', '사탕', '밥', '컵', '물'],
+  toys: ['요요', '공', '풍선', '기차'],
+  sky: ['달', '별', '회오리'],
+  shelf: ['휴지', '교과서', '가위', '연필', '거울', '가방', '반지', '보석', '왕관', '지팡이', '샤워기', '우산'],
+};
+const HOME_OF = {};
+for (const [spot, ws] of Object.entries(HOME)) ws.forEach((w) => { HOME_OF[w] = spot; });
+
+// 'word:사과' → 'garden', 'decor:lamp' → 'free'
+export function homeOf(key) {
+  const [kind, k] = key.split(':');
+  if (kind !== 'word') return 'free';
+  return HOME_OF[k] || 'free';
+}
+
+export const inArea = ([x0, y0, x1, y1], x, y) => x >= x0 && x <= x1 && y >= y0 && y <= y1;
+
+export function spotAt(x, y) {
+  for (const [id, s] of Object.entries(SPOTS)) if (inArea(s.area, x, y)) return id;
+  return null;
+}
+
+// 물건이 놓이면 하는 행동
+export const BEHAVIOR = {
+  garden: 'grow', pen: 'wander', line: 'sway', mat: 'shine', sky: 'twinkle', shelf: 'shine',
+};
+export const TOY_MOTION = { '공': 'bounce', '풍선': 'float', '요요': 'yoyo', '기차': 'chug' };
+export const SKY_MOTION = { '회오리': 'spin' };
+export const TREASURE = ['반지', '보석', '왕관', '지팡이', '거울'];

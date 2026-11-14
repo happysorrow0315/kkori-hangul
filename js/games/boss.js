@@ -10,7 +10,7 @@ import { shuffle } from '../ui.js';
 
 function stageBG(root) {
   root.innerHTML = '';
-  root.appendChild(el(`<div class="boss-stage"><div class="game-bg">${villageBG(100, { banner: false, castle: villageLook().opts.castle })}</div><div class="boss-zombie">${zombieSVG('evil')}</div></div>`));
+  root.appendChild(el(`<div class="boss-stage"><div class="game-bg">${villageBG(100, { ...villageLook().opts, banner: false })}</div><div class="boss-zombie">${zombieSVG('evil')}</div></div>`));
 }
 const line = (root, who, text, mood) => speech({ who, mood, text: fill(text), root });
 
