@@ -153,7 +153,8 @@ export function refreshBoard(force = false) {
   const pool = shuffle(TYPES.filter((t) => !avoid.has(t) && !normal.some((q) => q.type === t)));
   while (normal.length < want && pool.length) normal.push(makeQuest(pool.shift(), normal));
   const out = [...normal];
-  if (s) out.unshift(S.board.find((q) => q.story === s.id) || storyQuest(s)); // 이미 올라온 이야기 카드는 그대로
+  // 이미 올라온 이야기 카드는 그대로 (예전 버전 카드라 내용이 다르면 새로 만듦)
+  if (s) out.unshift(S.board.find((q) => q.story === s.id && q.type === s.type && q.words[0] === s.word) || storyQuest(s));
   if (bossReady()) out.unshift({ id: 'boss-1', boss: true, type: 'boss', words: [], giver: 'zombie', text: '좀비괴물이 마지막 대결을 하자고 해!', title: '좀비괴물과 대결' });
   S.board = out;
   save();

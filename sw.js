@@ -1,6 +1,6 @@
 // 오프라인 실행용 서비스 워커
 // 게임 파일을 바꾸면 VERSION을 올려야 아이패드에 새 버전이 받아져요.
-const VERSION = 'kkori-v2';
+const VERSION = 'kkori-v3';
 const FILES = [
   './', 'index.html', 'manifest.webmanifest', 'css/style.css', 'fonts/Jua-Regular.ttf',
   'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png',
