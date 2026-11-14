@@ -63,7 +63,7 @@ export function pickWords(n, exclude = [], filter = null) {
 
 export function toolLevel(type) {
   const n = S.tools[type] || 0;
-  return n >= 12 ? 2 : n >= 5 ? 1 : 0;
+  return n >= 4 ? 2 : n >= 2 ? 1 : 0;
 }
 
 export const TOOL_NAMES = {

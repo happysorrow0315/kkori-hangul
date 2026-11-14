@@ -1,6 +1,6 @@
 // 오프라인 실행용 서비스 워커
 // 게임 파일을 바꾸면 VERSION을 올려야 아이패드에 새 버전이 받아져요.
-const VERSION = 'kkori-v1';
+const VERSION = 'kkori-v2';
 const FILES = [
   './', 'index.html', 'manifest.webmanifest', 'css/style.css', 'fonts/Jua-Regular.ttf',
   'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png',
@@ -8,7 +8,8 @@ const FILES = [
   'js/words.js', 'js/strokes.js', 'js/adaptive.js', 'js/quests.js', 'js/gate.js',
   'js/scenes/title.js', 'js/scenes/onboarding.js', 'js/scenes/village.js', 'js/scenes/panels.js',
   'js/scenes/parent.js', 'js/scenes/mission.js',
-  'js/games/common.js', 'js/games/find.js', 'js/games/dig.js', 'js/games/trace.js', 'js/games/boss.js',
+  'js/games/common.js', 'js/games/index.js', 'js/games/find.js', 'js/games/dig.js', 'js/games/trace.js', 'js/games/boss.js',
+  'js/games/fish.js', 'js/games/bridge.js', 'js/games/orb.js', 'js/games/hidden.js',
 ];
 
 self.addEventListener('install', (e) => {

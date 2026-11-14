@@ -57,6 +57,19 @@ export const SIMILAR = {
   'ㅝ': ['ㅘ', 'ㅓ'], 'ㅞ': ['ㅙ', 'ㅔ'], 'ㅟ': ['ㅚ', 'ㅢ'], 'ㅢ': ['ㅡ', 'ㅟ'],
 };
 
+// 헷갈리기 쉬운 글자(음절) 만들기: 과 -> 고, 가, 궈 ...
+export function similarSyllables(syl, n = 3, avoid = []) {
+  const d = decompose(syl);
+  if (!d) return [];
+  const cand = new Set();
+  (SIMILAR[d.cho] || []).forEach((c) => cand.add(compose(c, d.jung, d.jong)));
+  (SIMILAR[d.jung] || []).forEach((j) => cand.add(compose(d.cho, j, d.jong)));
+  if (VOWEL_SPLIT[d.jung]) VOWEL_SPLIT[d.jung].forEach((j) => cand.add(compose(d.cho, j, d.jong)));
+  const out = [...cand].filter((s) => s && s !== syl && !avoid.includes(s));
+  for (let i = out.length - 1; i > 0; i--) { const k = Math.floor(Math.random() * (i + 1)); [out[i], out[k]] = [out[k], out[i]]; }
+  return out.slice(0, n);
+}
+
 // 두 단어가 얼마나 비슷한지 (물건 찾기 미끼용)
 export function similarity(a, b) {
   if (a === b) return -1;

@@ -1,16 +1,52 @@
 // 음성(TTS)과 효과음
 import { S } from './state.js';
 
+// 아이패드에 깔린 한국어 음성 중 가장 좋은 여자 목소리를 고름
+// (설정 → 손쉬운 사용 → 말하기 콘텐츠 → 음성 → 한국어 에서 '고급/프리미엄' 음성을 받으면 자동으로 사용)
 let voice = null;
-function pickVoice() {
-  if (!('speechSynthesis' in window)) return;
-  const vs = speechSynthesis.getVoices();
-  const ko = vs.filter((v) => (v.lang || '').toLowerCase().startsWith('ko'));
-  voice = ko.find((v) => /yuna|유나/i.test(v.name)) || ko.find((v) => /female|여/i.test(v.name)) || ko[0] || null;
+const isMale = (v) => /minsu|민수|male|남성|남자/i.test(v.name + ' ' + v.voiceURI);
+function quality(v) {
+  const n = (v.name + ' ' + v.voiceURI).toLowerCase();
+  let s = 0;
+  if (/premium|프리미엄/.test(n)) s += 30;
+  if (/enhanced|향상|고급/.test(n)) s += 20;
+  if (/yuna|유나/.test(n)) s += 5;
+  if (isMale(v)) s -= 100;
+  if (v.localService) s += 1;
+  return s;
 }
+export function koreanVoices() {
+  if (!('speechSynthesis' in window)) return [];
+  return speechSynthesis.getVoices()
+    .filter((v) => (v.lang || '').toLowerCase().replace('_', '-').startsWith('ko'))
+    .sort((a, b) => quality(b) - quality(a));
+}
+export function pickVoice() {
+  const ko = koreanVoices();
+  voice = (S.settings.voiceURI && ko.find((v) => v.voiceURI === S.settings.voiceURI)) || ko[0] || null;
+  return voice;
+}
+export const currentVoice = () => voice;
 if ('speechSynthesis' in window) {
   pickVoice();
   speechSynthesis.addEventListener?.('voiceschanged', pickVoice);
+}
+
+// 문장마다 높낮이와 빠르기를 바꿔서 덜 딱딱하게 읽기
+function phrases(text) {
+  // 구버전 사파리 호환을 위해 lookbehind 없이 문장 단위로 자름
+  return (text.replace(/\s+/g, ' ').match(/[^.!?~…]+[.!?~…]*/g) || [text])
+    .map((t) => t.trim())
+    .filter((t) => t && !/^[.!?~…]+$/.test(t));
+}
+function prosody(t, base) {
+  let pitch = 1.18, rate = base;
+  if (/\?$/.test(t)) { pitch = 1.3; }
+  else if (/!$/.test(t)) { pitch = 1.32; rate = base * 1.04; }
+  else if (/~$/.test(t)) { pitch = 1.24; rate = base * 0.9; }
+  if (/\.\.\.|…/.test(t)) { pitch = 1.08; rate = base * 0.86; }
+  if (/^(우와|와아|오호|짠|헤헤|히히|어라|앗|으앙|좋았어|야호|오오)/.test(t)) pitch += 0.08;
+  return { pitch: Math.min(1.6, pitch), rate };
 }
 
 let speakId = 0;
@@ -18,19 +54,29 @@ export function say(text, { rate } = {}) {
   if (!text || !('speechSynthesis' in window)) return Promise.resolve();
   const id = ++speakId;
   try { speechSynthesis.cancel(); } catch (e) { /* 무시 */ }
+  if (!voice) pickVoice();
+  const base = rate ?? S.settings.ttsRate ?? 0.95;
+  const parts = phrases(text);
   return new Promise((resolve) => {
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'ko-KR';
-    if (voice) u.voice = voice;
-    u.rate = rate ?? S.settings.ttsRate ?? 0.9;
-    u.pitch = 1.1;
     let done = false;
     const finish = () => { if (!done) { done = true; resolve(); } };
-    u.onend = finish;
-    u.onerror = finish;
-    setTimeout(finish, 800 + text.length * 380);
+    setTimeout(finish, 1200 + text.length * 400);
+    let i = 0;
+    const next = () => {
+      if (id !== speakId || i >= parts.length) { finish(); return; }
+      const t = parts[i++];
+      const u = new SpeechSynthesisUtterance(t.replace(/~/g, ''));
+      u.lang = 'ko-KR';
+      if (voice) u.voice = voice;
+      const k = prosody(t, base);
+      u.pitch = k.pitch;
+      u.rate = k.rate;
+      u.onend = () => setTimeout(next, 90);
+      u.onerror = () => next();
+      speechSynthesis.speak(u);
+    };
     // iOS: cancel 직후 바로 speak하면 무시되는 경우가 있어 살짝 늦춤
-    setTimeout(() => { if (id === speakId) speechSynthesis.speak(u); else finish(); }, 60);
+    setTimeout(next, 60);
   });
 }
 export function stopSay() {

@@ -195,7 +195,7 @@ export function villageScene(root) {
   function setDecorating(v) {
     decorating = v;
     node.classList.toggle('decorating', v);
-    if (v) { drawDrawer(); say('물건을 위로 끌어서 마을에 놓아 봐!'); }
+    if (v) { drawDrawer(); say('물건을 위로 쭉 끌어서 마을에 놓아 봐!'); }
   }
 
   onTap($('.vbtn.board'), () => openBoard(root));
@@ -208,14 +208,15 @@ export function villageScene(root) {
     const c = $('.vchar.cat');
     c.classList.remove('boing'); void c.offsetWidth; c.classList.add('boing');
     const lines = [
-      '물건을 누르면 이름을 알려 줄게!',
-      '꾸미기를 누르면 되찾은 물건으로 마을을 꾸밀 수 있어.',
-      '별을 모아서 상점에서 모자를 사 줘~',
-      '도감에서 모은 글자를 볼 수 있어.',
-      '게시판에서 의뢰를 골라 봐!',
+      '헤헤, 물건을 콕 누르면 이름을 알려 줄게!',
+      '꾸미기를 누르면 되찾은 물건으로 마을을 꾸밀 수 있어. 어디에 놓을까~?',
+      '음~ 별을 모아서 상점에서 나한테 모자 사 줄래? 헤헤.',
+      '도감을 열면 지금까지 모은 글자를 볼 수 있어!',
+      '오늘은 어떤 의뢰를 해 볼까? 게시판을 열어 봐!',
+      '야옹~ 나는 네가 글자 찾는 거 보는 게 제일 좋아!',
     ];
     const s = nextStory();
-    speech({ who: 'kkori', text: bossReady() ? '좀비괴물이 게시판에서 기다리고 있어! 마지막 대결이야!' : s ? '게시판에 중요한 의뢰가 있어! 도와주러 가자!' : pick(lines) });
+    speech({ who: 'kkori', text: bossReady() ? '앗! 좀비괴물이 게시판에서 기다리고 있어! 마지막 대결이야!' : s ? '어라? 게시판에 중요한 의뢰가 왔어! 얼른 도와주러 가자!' : pick(lines) });
   });
   onTap($('.vchar.me'), () => { const c = $('.vchar.me'); c.classList.remove('boing'); void c.offsetWidth; c.classList.add('boing'); });
 
@@ -226,8 +227,8 @@ export function villageScene(root) {
     S.flags.villageIntro = true;
     save();
     (async () => {
-      await speech({ who: 'kkori', text: '여기가 우리 마을이야. 좀비괴물 때문에 마을이 회색이 됐어.' });
-      await speech({ who: 'kkori', text: '의뢰 게시판에서 할 일을 골라 글자를 되찾으면 마을에 색이 돌아와!' });
+      await speech({ who: 'kkori', text: '짠! 여기가 우리 마을이야. 그런데... 좀비괴물 때문에 마을이 회색이 됐어.' });
+      await speech({ who: 'kkori', text: '의뢰 게시판에서 할 일을 골라서 글자를 되찾으면, 마을에 색이 다시 돌아와! 같이 해 보자~' });
       $('.vbtn.board').classList.add('glow');
     })();
   }

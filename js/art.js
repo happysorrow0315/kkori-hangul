@@ -270,3 +270,70 @@ export function traceBG() {
     <g fill="#2d2258">${[60, 220, 380, 980, 1120].map((x) => `<path d="M${x} 700 L${x - 50} 700 L${x} 520 L${x + 50} 700Z"/>`).join('')}</g>
   </svg>`;
 }
+
+// ───────────────────────── 새 미니게임 배경 ─────────────────────────
+export function pondBG() {
+  return `<svg viewBox="0 0 1180 820" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+    <rect width="1180" height="820" fill="#bfe6ff"/>
+    <g fill="#fff"><ellipse cx="260" cy="70" rx="80" ry="24"/><ellipse cx="900" cy="56" rx="90" ry="26"/></g>
+    <path d="M0 230 C200 200 420 230 600 215 C820 200 1000 225 1180 210 V820 H0Z" fill="#9fd88a"/>
+    <ellipse cx="640" cy="580" rx="560" ry="250" fill="#5fb4e8" stroke="#5a4032" stroke-width="6"/>
+    <ellipse cx="640" cy="590" rx="520" ry="215" fill="#7ec4ff"/>
+    <g fill="none" stroke="#bfe6ff" stroke-width="4" stroke-linecap="round" opacity=".8">
+      <path d="M260 470 q20 -10 40 0 M820 440 q20 -10 40 0 M500 700 q20 -10 40 0 M960 650 q20 -10 40 0 M350 620 q20 -10 40 0"/>
+    </g>
+    <g stroke="#5a4032" stroke-width="3"><ellipse cx="180" cy="720" rx="44" ry="16" fill="#6bb865"/><ellipse cx="1080" cy="520" rx="40" ry="14" fill="#6bb865"/><circle cx="190" cy="712" r="7" fill="#ff8fab"/></g>
+    <g stroke="#5a4032" stroke-width="3" fill="#7cc576"><path d="M70 470 q10 -60 0 -110 M90 470 q20 -50 30 -90 M50 470 q-10 -50 -20 -80" fill="none" stroke="#4f9a4a" stroke-width="6"/></g>
+  </svg>`;
+}
+
+export function riverBG() {
+  return `<svg viewBox="0 0 1180 820" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+    <rect width="1180" height="820" fill="#bfe6ff"/>
+    <g fill="#fff"><ellipse cx="300" cy="80" rx="90" ry="26"/><ellipse cx="860" cy="64" rx="80" ry="24"/></g>
+    <path d="M0 300 C200 260 400 290 600 270 C800 250 1000 280 1180 262 V820 H0Z" fill="#b7e4a0"/>
+    <rect x="0" y="470" width="1180" height="350" fill="#5fb4e8"/>
+    <g fill="none" stroke="#bfe6ff" stroke-width="5" stroke-linecap="round"><path d="M260 560 q25 -12 50 0 M700 600 q25 -12 50 0 M480 720 q25 -12 50 0 M900 700 q25 -12 50 0 M360 790 q25 -12 50 0"/></g>
+    <path d="M0 410 H190 C205 480 200 640 170 820 H0Z" fill="#9fd88a" stroke="#5a4032" stroke-width="6"/>
+    <path d="M1180 410 H1000 C985 480 990 640 1020 820 H1180Z" fill="#9fd88a" stroke="#5a4032" stroke-width="6"/>
+    <g stroke="#5a4032" stroke-width="4"><circle cx="1090" cy="330" r="60" fill="#7cc576"/><rect x="1080" y="370" width="20" height="44" fill="#b07a4a"/></g>
+  </svg>`;
+}
+
+// 숨은 글자 찾기: 그림 장면과 글자를 숨길 자리(그 자리 색과 비슷한 색)
+export const HIDE_SPOTS = [
+  [170, 330, '#5aa356'], [290, 335, '#5aa356'], [230, 440, '#5aa356'], [330, 410, '#5aa356'], [130, 410, '#5aa356'],
+  [232, 570, '#8a5a32'], [232, 690, '#8a5a32'],
+  [470, 560, '#e3c69c'], [600, 650, '#e3c69c'], [600, 545, '#e3c69c'], [470, 680, '#e3c69c'],
+  [530, 432, '#e0607e'],
+  [730, 712, '#4f9a4a'], [840, 735, '#4f9a4a'], [1010, 690, '#4f9a4a'], [1100, 730, '#4f9a4a'],
+  [870, 525, '#4f9ad8'], [990, 535, '#4f9ad8'],
+  [720, 345, '#9ccbe8'], [1000, 330, '#9ccbe8'], [420, 335, '#9ccbe8'],
+  [360, 775, '#7cb86a'], [660, 790, '#7cb86a'],
+];
+export function hiddenBG() {
+  return `<svg viewBox="0 0 1180 820" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+    <rect width="1180" height="820" fill="#bfe6ff"/>
+    <g fill="#fff"><ellipse cx="700" cy="310" rx="90" ry="34"/><ellipse cx="990" cy="295" rx="80" ry="30"/><ellipse cx="420" cy="295" rx="70" ry="28"/></g>
+    <path d="M0 470 C300 440 700 460 1180 450 V820 H0Z" fill="#9fd88a"/>
+    <g stroke="#5a4032" stroke-width="5" stroke-linejoin="round">
+      <rect x="205" y="430" width="55" height="340" rx="10" fill="#b07a4a"/>
+      <circle cx="230" cy="370" r="125" fill="#7cc576"/>
+      <rect x="420" y="470" width="230" height="270" rx="8" fill="#fff1d6"/>
+      <path d="M396 474 L535 360 L674 474Z" fill="#ff8fa3"/>
+      <rect x="512" y="640" width="48" height="100" rx="18" fill="#c9824a"/>
+      <ellipse cx="930" cy="530" rx="170" ry="62" fill="#7ec4ff"/>
+      <ellipse cx="785" cy="725" rx="130" ry="72" fill="#6bb865"/>
+      <ellipse cx="1055" cy="710" rx="120" ry="82" fill="#6bb865"/>
+    </g>
+    <path d="M300 820 C380 770 600 760 700 820Z" fill="#9bcf88"/>
+  </svg>`;
+}
+
+export function fishSVG(color = '#ff9f43') {
+  return wrap(`<path d="M150 50 L182 22 L178 50 L182 78Z" fill="${color}"/><ellipse cx="90" cy="50" rx="68" ry="40" fill="${color}"/><circle cx="40" cy="42" r="7" fill="#fff"/><circle cx="38" cy="42" r="3.5" fill="${O}" stroke="none"/><path d="M26 60 q6 4 12 0" fill="none" stroke-width="2.5"/><path d="M98 12 q12 -10 24 2" fill="${color}"/>`, '0 0 190 100');
+}
+
+export function rodSVG() {
+  return wrap(`<path d="M10 90 L90 10" stroke="#b07a4a" stroke-width="9"/><path d="M10 90 L90 10" stroke="#d9a46a" stroke-width="4"/><circle cx="26" cy="74" r="8" fill="#ff8fab"/>`);
+}

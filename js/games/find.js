@@ -99,7 +99,7 @@ export async function playFind(root, { words, boss = false }) {
         const k = st.width / 1180;
         confetti((r.left + r.width / 2 - st.left) / k, (r.top + r.height / 2 - st.top) / k);
         zombie.innerHTML = zombieSVG('sad');
-        await say(`${target}! 찾았다!`);
+        await say(`우와! ${target} 찾았다!`);
         await sleep(400);
         record(target, { mistakes, hinted });
         bumpSkill('find', !mistakes && !hinted, mistakes);
@@ -124,7 +124,7 @@ export async function playFind(root, { words, boss = false }) {
       paused = true;
       await speech({ who: 'zombie', mood: 'eat', text: '냠냠! 내가 먼저 찾았지롱~', root });
       if (aborted) return;
-      await speech({ who: 'kkori', text: fails >= 2 ? `괜찮아! 꼬리가 알려줄게. 찾을 글자는 ${josa(target, '이야/야')}.` : '괜찮아! 다시 해 보자. 글자를 천천히 읽어 봐.', root });
+      await speech({ who: 'kkori', text: fails >= 2 ? `괜찮아! 꼬리가 알려줄게. 찾을 글자는 ${josa(target, '이야/야')}.` : '괜찮아, 괜찮아! 다시 해 보자. 글자를 천천히 읽어 봐~', root });
       if (fails >= 2) hinted = true;
       paused = false;
       if (aborted) return;

@@ -36,7 +36,7 @@ export function openBoard(root) {
     onTap(c.querySelector('.qgo'), () => { node.remove(); runMission(q); });
     wrap.appendChild(c);
   });
-  say('어떤 의뢰를 해 볼까?');
+  say('음~ 오늘은 어떤 의뢰를 해 볼까?');
 }
 
 export function openShop(root, onChange) {

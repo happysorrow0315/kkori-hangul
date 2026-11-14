@@ -45,7 +45,11 @@ async function startQuest(type) {
     const want = { find: '가게에서 찾기', dig: '땅 파서 맞추기', trace: '봉인 마법 풀기' }[type];
     if (label.includes(want)) { await cards.nth(i).locator('.qgo').click(); return; }
   }
-  throw new Error('의뢰 카드 없음: ' + type);
+  await page.locator('.close-btn').click();
+  await page.evaluate(async (type) => { const { S } = await import('/js/state.js'); S.board.push({ id: 'test-' + type, type, words: type === 'dig' ? ['바지', '나비'] : ['나무'], giver: 'owl', text: '테스트 의뢰' }); }, type);
+  await page.locator('.vbtn.board').click();
+  await page.waitForSelector('.qcard');
+  await page.locator('.qcard').last().locator('.qgo').click();
 }
 
 async function playFind() {

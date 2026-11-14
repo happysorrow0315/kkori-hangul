@@ -194,7 +194,7 @@ export async function playDig(root, { words, boss = false }) {
         $('.dig-pic').classList.add('alive');
         blocks.classList.add('solved');
         confetti(590, 140);
-        await say(`${target}! 완성!`);
+        await say(`짠! ${target} 완성!`);
         await sleep(500);
         blocks.classList.remove('solved');
         record(target, { mistakes, hinted });
@@ -214,8 +214,8 @@ export async function playDig(root, { words, boss = false }) {
       });
       const isWord = ALL_WORDS.includes(made);
       const msg = isWord
-        ? `어? ${josa(made, '이/가')} 나왔네! 그림을 다시 잘 봐.`
-        : `${made}? 이런 말은 없어! ${tip || '다시 맞춰 보자.'}`;
+        ? `어라? ${josa(made, '이/가')} 나왔네! 그림을 다시 잘 봐 봐~`
+        : `음... ${made}? 그런 말은 없어! ${tip || '다시 맞춰 보자.'}`;
       if (isWord) {
         const pop = el(`<div class="wrong-made">${itemSVG(made)}<div>${esc(made)}</div></div>`);
         f.body.appendChild(pop);

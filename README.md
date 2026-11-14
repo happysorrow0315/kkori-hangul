@@ -37,7 +37,7 @@ node tools/serve.js
 npm install
 node tools/serve.js          # 다른 창에서 켜 두기
 node tools/test.mjs          # 처음 시작 ~ 미니게임 3종 ~ 꾸미기 ~ 상점 ~ 부모 설정 ~ 30분 잠금
-node tools/test-boss.mjs     # 오답 흐름, 복원 100%, 보스 대결, 챕터 클리어
+node tools/test-chapter.mjs  # 게시판에서 골라 가며 1챕터 12개 미션 + 보스까지, 새 놀이 오답 흐름 포함
 ```
 스크린샷은 `tools/shots/`에 저장된다. Microsoft Edge가 설치되어 있어야 한다.
 
@@ -51,7 +51,11 @@ node tools/test-boss.mjs     # 오답 흐름, 복원 100%, 보스 대결, 챕터
 | `js/games/find.js` | 미니게임 1: 좀비괴물보다 먼저 물건 찾기 |
 | `js/games/dig.js` | 미니게임 2: 땅 파서 자모 발굴 + 글자 조립 |
 | `js/games/trace.js`, `js/strokes.js` | 미니게임 3: 봉인 마법 따라 쓰기 (획순 데이터) |
-| `js/games/boss.js` | 챕터 마지막 좀비괴물 대결 |
+| `js/games/fish.js` | 미니게임 4: 연못에서 글자 낚시 |
+| `js/games/bridge.js` | 미니게임 5: 글자 블록으로 다리 만들기 |
+| `js/games/orb.js` | 미니게임 6: 마법 구슬 순서대로 맞히기 |
+| `js/games/hidden.js` | 미니게임 7: 그림 속 숨은 글자 찾기 |
+| `js/games/boss.js` | 챕터 마지막 좀비괴물 대결 (7종 중 무작위 3종) |
 | `js/scenes/` | 시작, 처음 설정, 마을, 게시판/상점/도감, 부모 설정, 미션 진행 |
 | `js/gate.js` | 30분마다 부모 비밀번호 확인 |
 | `js/art.js` | 모든 그림 (SVG) |

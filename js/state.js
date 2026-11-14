@@ -30,7 +30,8 @@ function defaults() {
       zombieSpeed: 'auto', // auto | slow | normal | fast
       digLevel: 'auto', // auto | easy | hard
       compound: 'auto', // auto | more
-      ttsRate: 0.9,
+      ttsRate: 0.95,
+      voiceURI: null,
     },
     gate: { played: 0 },
     flags: {},

@@ -184,7 +184,7 @@ export async function playTrace(root, { words, boss = false }) {
     sfx('break');
     $('.seal').classList.add('broken');
     confetti(230, 300);
-    await say(`${word}! 봉인이 풀렸어!`);
+    await say(`우와! ${word} 봉인이 풀렸어!`);
     await sleep(600);
     resolveAll();
   }

@@ -8,12 +8,8 @@ import { STORY, applyResults, fill } from '../quests.js';
 import { TOOL_NAMES } from '../adaptive.js';
 import { josa } from '../hangul.js';
 import { setInMission } from '../gate.js';
-import { playFind } from '../games/find.js';
-import { playDig } from '../games/dig.js';
-import { playTrace } from '../games/trace.js';
 import { playBoss } from '../games/boss.js';
-
-const GAMES = { find: playFind, dig: playDig, trace: playTrace };
+import { GAMES } from '../games/index.js';
 
 function backdrop(root, restore = S.restore) {
   root.innerHTML = '';
@@ -50,11 +46,11 @@ export async function runMission(q) {
 }
 
 const MILESTONE = {
-  25: [{ who: 'kkori', mood: 'wow', text: '마을 복원 25%! 마을에 꽃이 피기 시작했어!' }],
-  50: [{ who: 'kkori', mood: 'wow', text: '마을 복원 50%! 놀이터가 열렸어! 놀이터에도 물건을 놓을 수 있어.' }],
-  75: [{ who: 'kkori', mood: 'wow', text: '마을 복원 75%! 하늘에 무지개가 떴어!' }],
+  25: [{ who: 'kkori', mood: 'wow', text: '우와~ 마을 복원 25%! 봐 봐, 꽃이 피기 시작했어!' }],
+  50: [{ who: 'kkori', mood: 'wow', text: '야호! 마을 복원 50%! 놀이터가 열렸어. 이제 놀이터에도 물건을 놓을 수 있어~' }],
+  75: [{ who: 'kkori', mood: 'wow', text: '오오! 마을 복원 75%! 하늘에 무지개가 떴어!' }],
   100: [
-    { who: 'kkori', mood: 'wow', text: '마을이 다 살아났어! 그런데... 어디서 으르렁 소리가 들려.' },
+    { who: 'kkori', mood: 'wow', text: '해냈다! 마을이 다 살아났어! 그런데... 어디서 으르렁 소리가 들려.' },
     { who: 'zombie', mood: 'evil', text: '누가 내 글자를 다 되찾았어?! 게시판에서 기다리고 있겠다!' },
   ],
 };

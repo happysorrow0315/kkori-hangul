@@ -24,12 +24,12 @@ function askName(root) {
       <div class="onb-bg">${villageBG(100, { banner: false })}</div>
       <div class="onb-cat">${catSVG({ mood: 'happy' })}</div>
       <div class="panel onb-panel">
-        <div class="onb-q">안녕! 나는 꼬리야.<br>너의 이름은 뭐야?</div>
+        <div class="onb-q">안녕~ 나는 꼬리야!<br>너의 이름은 뭐야?</div>
         <input class="onb-input" maxlength="6" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="이름">
         <button class="btn big onb-ok">좋아!</button>
       </div></div>`);
     root.appendChild(node);
-    say('안녕! 나는 꼬리야. 너의 이름은 뭐야?');
+    say('안녕~ 나는 꼬리야! 너의 이름은 뭐야?');
     const input = node.querySelector('.onb-input');
     onTap(node.querySelector('.onb-ok'), () => {
       const v = input.value.trim().replace(/\s+/g, '');
@@ -89,7 +89,7 @@ async function opening(root) {
   await speech({ who: 'zombie', mood: 'eat', text: '으흐흐~ 글자는 정말 맛있어! 냠냠!', root });
   bg.classList.add('gray');
   await sleep(800);
-  await speech({ who: 'narr', text: '글자를 먹힌 물건들이 하나둘 사라지고, 마을은 회색이 되었어요.', root });
+  await speech({ who: 'narr', text: '글자를 먹힌 물건들이 하나둘 사라지고... 마을은 회색이 되어 버렸어요.', root });
   zb.classList.add('out');
-  await speech({ who: 'kkori', mood: 'wow', text: fill('{A}! 우리 같이 글자를 되찾자!\n글자를 되찾으면 물건이 다시 살아나!'), root });
+  await speech({ who: 'kkori', mood: 'wow', text: fill('{A}! 우리 같이 글자를 되찾자!\n글자를 되찾으면 물건이 다시 살아나. 할 수 있지?'), root });
 }

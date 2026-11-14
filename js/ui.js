@@ -128,6 +128,12 @@ export function shake(node) {
   node.classList.add('shake');
 }
 
+export function nudge(node) {
+  node.classList.remove('nudge');
+  void node.offsetWidth;
+  node.classList.add('nudge');
+}
+
 export function starsText(n) {
   return '★'.repeat(n) + '☆'.repeat(Math.max(0, 3 - n));
 }

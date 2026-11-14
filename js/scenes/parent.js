@@ -1,10 +1,11 @@
 // 부모 설정 (비밀번호로 들어감)
 import { S, save, saveNow, pwHash, exportData, importData, resetAll } from '../state.js';
 import { el, onTap, keypad, toast, esc } from '../ui.js';
-import { say } from '../audio.js';
+import { say, koreanVoices, currentVoice, pickVoice } from '../audio.js';
 import { catAccuracy, hardestWords, skill, toolLevel, TOOL_NAMES } from '../adaptive.js';
 import { CATS, wordsOf } from '../words.js';
 import { go } from '../router.js';
+import { TYPE_INFO } from '../quests.js';
 
 export async function openParent(root, onChange) {
   const code = await keypad({ title: '부모님 비밀번호' });
@@ -25,7 +26,7 @@ export async function openParent(root, onChange) {
         <div>도감</div><b>${Object.keys(S.dex).length} / ${words.length} 단어</b>
         <div>마을 복원</div><b>${S.restore}%</b>
         ${Object.entries(CATS).map(([k, v]) => `<div>정확도: ${esc(v)}</div><b>${pct(catAccuracy(k))}</b>`).join('')}
-        <div>실력 지수 (찾기/땅파기/쓰기)</div><b>${['find', 'dig', 'trace'].map((t) => Math.round(skill(t) * 100)).join(' / ')}</b>
+        ${Object.entries(TYPE_INFO).map(([t, v]) => `<div>실력 지수: ${esc(v.label)}</div><b>${Math.round(skill(t) * 100)}</b>`).join('')}
         <div>도구</div><b>${['find', 'dig', 'trace'].map((t) => TOOL_NAMES[t][toolLevel(t)]).join(', ')}</b>
       </div>
       <div class="p-sub">자주 틀린 단어</div>
@@ -41,7 +42,9 @@ export async function openParent(root, onChange) {
       <div class="p-row"><div>지금까지 이어서 논 시간</div><b>${Math.floor((S.gate.played || 0) / 60)}분</b></div>
 
       <h3>음성</h3>
-      <div class="p-row"><div>읽어 주는 속도</div>${seg('ttsRate', [[0.75, '느리게'], [0.9, '보통'], [1.05, '빠르게']])}<button class="btn small sky p-test">들어 보기</button></div>
+      <div class="p-row"><div>읽어 주는 속도</div>${seg('ttsRate', [[0.8, '느리게'], [0.95, '보통'], [1.08, '빠르게']])}<button class="btn small sky p-test">들어 보기</button></div>
+      <div class="p-row"><div>목소리</div><div class="p-voices"></div></div>
+      <div class="p-note">더 자연스러운 목소리: 아이패드 설정 → 손쉬운 사용 → 말하기 콘텐츠(또는 읽기 및 말하기) → 음성 → 한국어 → 'Yuna(유나)'의 고급 또는 프리미엄 음성을 내려받으세요. 받은 뒤 게임을 다시 열면 자동으로 그 목소리를 써요.</div>
 
       <h3>비밀번호와 데이터</h3>
       <div class="p-row"><button class="btn small p-pw">비밀번호 바꾸기</button></div>
@@ -61,7 +64,23 @@ export async function openParent(root, onChange) {
     save();
     s.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b));
   })));
-  onTap(node.querySelector('.p-test'), () => say('안녕! 나는 꼬리야. 우유, 사과, 돼지.'));
+  onTap(node.querySelector('.p-test'), () => say('안녕! 나는 꼬리야~ 우와, 오늘도 같이 글자 찾으러 갈까? 우유, 사과, 돼지!'));
+  const vbox = node.querySelector('.p-voices');
+  const drawVoices = () => {
+    const list = koreanVoices();
+    const cur = currentVoice();
+    vbox.innerHTML = list.length
+      ? list.map((v, i) => `<button class="btn small ${cur && cur.voiceURI === v.voiceURI ? 'mint' : 'sky'}" data-i="${i}">${esc(v.name)}</button>`).join(' ')
+      : '<span>이 기기에서 한국어 음성을 찾지 못했어요</span>';
+    vbox.querySelectorAll('button').forEach((b) => onTap(b, () => {
+      S.settings.voiceURI = list[+b.dataset.i].voiceURI;
+      save();
+      pickVoice();
+      drawVoices();
+      say('안녕! 이 목소리 어때?');
+    }));
+  };
+  drawVoices();
 
   onTap(node.querySelector('.p-pw'), async () => {
     const a = await keypad({ title: '새 비밀번호', sub: '숫자 4자리' });
