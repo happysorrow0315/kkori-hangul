@@ -1,6 +1,6 @@
 // 시작점
 import { fitStage } from './ui.js';
-import { register, go } from './router.js';
+import { register, go, currentScene } from './router.js';
 import { titleScene } from './scenes/title.js';
 import { onboardingScene } from './scenes/onboarding.js';
 import { villageScene } from './scenes/village.js';
@@ -24,5 +24,13 @@ document.addEventListener('contextmenu', (e) => e.preventDefault());
 go('title');
 
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
-  navigator.serviceWorker.register('sw.js').catch(() => {});
+  // 새 버전이 다 받아지면(서비스 워커 교체) 게임 중이 아닐 때 한 번 새로고침
+  const hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController || window.__pendingReload) return;
+    window.__pendingReload = true;
+    saveNow();
+    if (['title', 'village'].includes(currentScene())) location.reload();
+  });
+  navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then((r) => r.update()).catch(() => {});
 }

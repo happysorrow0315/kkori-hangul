@@ -46,10 +46,8 @@ async function startQuest(type) {
     if (label.includes(want)) { await cards.nth(i).locator('.qgo').click(); return; }
   }
   await page.locator('.close-btn').click();
-  await page.evaluate(async (type) => { const { S } = await import('/js/state.js'); S.board.push({ id: 'test-' + type, type, words: type === 'dig' ? ['바지', '나비'] : ['나무'], giver: 'owl', text: '테스트 의뢰' }); }, type);
-  await page.locator('.vbtn.board').click();
-  await page.waitForSelector('.qcard');
-  await page.locator('.qcard').last().locator('.qgo').click();
+  // 게시판에 없으면 테스트용 의뢰를 바로 시작
+  await page.evaluate(async (type) => { const { runMission } = await import('/js/scenes/mission.js'); runMission({ id: 'test-' + type, type, words: type === 'dig' ? ['바지', '나비'] : ['나무'], giver: 'owl', text: '테스트 의뢰' }); }, type);
 }
 
 async function playFind() {
