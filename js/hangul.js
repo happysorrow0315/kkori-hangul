@@ -51,14 +51,55 @@ export const SIMILAR = {
   'ㄱ': ['ㅋ', 'ㄴ'], 'ㄴ': ['ㄷ', 'ㄱ'], 'ㄷ': ['ㅌ', 'ㄹ'], 'ㄹ': ['ㄷ', 'ㅁ'], 'ㅁ': ['ㅂ', 'ㅇ'],
   'ㅂ': ['ㅍ', 'ㅁ'], 'ㅅ': ['ㅈ', 'ㅆ'], 'ㅇ': ['ㅎ', 'ㅁ'], 'ㅈ': ['ㅊ', 'ㅅ'], 'ㅊ': ['ㅈ', 'ㅎ'],
   'ㅋ': ['ㄱ', 'ㅌ'], 'ㅌ': ['ㄷ', 'ㅋ'], 'ㅍ': ['ㅂ', 'ㅌ'], 'ㅎ': ['ㅇ', 'ㅊ'],
+  'ㄲ': ['ㄱ', 'ㅋ'], 'ㄸ': ['ㄷ', 'ㅌ'], 'ㅃ': ['ㅂ', 'ㅍ'], 'ㅆ': ['ㅅ', 'ㅈ'], 'ㅉ': ['ㅈ', 'ㅊ'],
   'ㅏ': ['ㅓ', 'ㅑ'], 'ㅓ': ['ㅏ', 'ㅕ'], 'ㅑ': ['ㅕ', 'ㅏ'], 'ㅕ': ['ㅑ', 'ㅓ'], 'ㅗ': ['ㅜ', 'ㅛ'],
   'ㅛ': ['ㅠ', 'ㅗ'], 'ㅜ': ['ㅗ', 'ㅠ'], 'ㅠ': ['ㅛ', 'ㅜ'], 'ㅡ': ['ㅣ', 'ㅜ'], 'ㅣ': ['ㅡ', 'ㅏ'],
   'ㅐ': ['ㅔ', 'ㅏ'], 'ㅔ': ['ㅐ', 'ㅓ'], 'ㅘ': ['ㅝ', 'ㅏ'], 'ㅙ': ['ㅞ', 'ㅚ'], 'ㅚ': ['ㅟ', 'ㅙ'],
   'ㅝ': ['ㅘ', 'ㅓ'], 'ㅞ': ['ㅙ', 'ㅔ'], 'ㅟ': ['ㅚ', 'ㅢ'], 'ㅢ': ['ㅡ', 'ㅟ'],
 };
 
+// 소리 가족: 예사소리 · 된소리 · 거센소리 (굴 / 꿀 / 쿨)
+export const SOUND_FAMILY = [['ㄱ', 'ㄲ', 'ㅋ'], ['ㄷ', 'ㄸ', 'ㅌ'], ['ㅂ', 'ㅃ', 'ㅍ'], ['ㅅ', 'ㅆ'], ['ㅈ', 'ㅉ', 'ㅊ']];
+export const familyOf = (c) => SOUND_FAMILY.find((f) => f.includes(c)) || null;
+export const DOUBLE_OF = { 'ㄲ': 'ㄱ', 'ㄸ': 'ㄷ', 'ㅃ': 'ㅂ', 'ㅆ': 'ㅅ', 'ㅉ': 'ㅈ' };
+export const isDouble = (c) => c in DOUBLE_OF;
+export function combineConsonants(a, b) {
+  if (a !== b) return null;
+  return Object.keys(DOUBLE_OF).find((k) => DOUBLE_OF[k] === a) || null;
+}
+
+// 소리가 비슷한 단어: 꿀 → 굴, 쿨 (첫소리 가족을 바꿈)
+export function soundAlikes(word, n = 2) {
+  const chars = [...word];
+  const out = new Set();
+  chars.forEach((ch, i) => {
+    const d = decompose(ch);
+    const fam = d && familyOf(d.cho);
+    if (!fam) return;
+    fam.filter((c) => c !== d.cho).forEach((c) => {
+      const copy = [...chars];
+      copy[i] = compose(c, d.jung, d.jong);
+      out.add(copy.join(''));
+    });
+  });
+  if (out.size < n) {
+    chars.forEach((ch, i) => similarSyllables(ch, 3).forEach((s) => { const copy = [...chars]; copy[i] = s; out.add(copy.join('')); }));
+  }
+  const arr = [...out].filter((w) => w !== word);
+  for (let i = arr.length - 1; i > 0; i--) { const k = Math.floor(Math.random() * (i + 1)); [arr[i], arr[k]] = [arr[k], arr[i]]; }
+  // 첫소리 가족을 바꾼 것(듣기 핵심)을 앞에
+  arr.sort((a, b) => famDiff(word, b) - famDiff(word, a));
+  return arr.slice(0, n);
+}
+function famDiff(a, b) {
+  let s = 0;
+  [...a].forEach((ch, i) => { const x = decompose(ch), y = decompose([...b][i] || ''); if (x && y && x.cho !== y.cho && familyOf(x.cho) && familyOf(x.cho) === familyOf(y.cho)) s++; });
+  return s;
+}
+
 // 받침끼리 헷갈리기 쉬운 것
-export const SIMILAR_JONG = { 'ㄱ': ['ㅇ', 'ㅂ'], 'ㄴ': ['ㅇ', 'ㅁ', 'ㄹ'], 'ㄹ': ['ㄴ', 'ㅁ'], 'ㅁ': ['ㅂ', 'ㄴ', 'ㅇ'], 'ㅂ': ['ㅁ', 'ㄱ'], 'ㅇ': ['ㄴ', 'ㅁ', 'ㄱ'] };
+export const SIMILAR_JONG = { 'ㄱ': ['ㅇ', 'ㅂ'], 'ㄴ': ['ㅇ', 'ㅁ', 'ㄹ'], 'ㄹ': ['ㄴ', 'ㅁ'], 'ㅁ': ['ㅂ', 'ㄴ', 'ㅇ'], 'ㅂ': ['ㅁ', 'ㄱ'], 'ㅇ': ['ㄴ', 'ㅁ', 'ㄱ'],
+  'ㅅ': ['ㄷ', 'ㅈ'], 'ㅈ': ['ㅅ', 'ㅊ'], 'ㅊ': ['ㅈ', 'ㅅ'], 'ㅌ': ['ㄷ', 'ㅅ'], 'ㅍ': ['ㅂ'], 'ㄷ': ['ㅅ', 'ㅌ'], 'ㅋ': ['ㄱ'] };
 
 // 헷갈리기 쉬운 글자(음절) 만들기: 과 -> 고, 가, 궈 ...
 export function similarSyllables(syl, n = 3, avoid = []) {

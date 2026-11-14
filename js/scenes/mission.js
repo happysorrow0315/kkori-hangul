@@ -2,7 +2,7 @@
 import { S, save } from '../state.js';
 import { go } from '../router.js';
 import { sceneEl, el, speech, onTap, sleep, confetti, esc, starsText } from '../ui.js';
-import { villageBG, riverBG, itemSVG, shovelSVG, wandSVG, shoeSVG, starSVG } from '../art.js';
+import { villageBG, riverBG, spaceBG, itemSVG, shovelSVG, wandSVG, shoeSVG, starSVG } from '../art.js';
 import { say, sfx } from '../audio.js';
 import { STORY, applyResults, fill, MILESTONES, villageLook } from '../quests.js';
 import { CHAPTERS, LAST_CHAPTER } from '../words.js';
@@ -14,6 +14,7 @@ import { GAMES } from '../games/index.js';
 
 function backdrop(root) {
   root.innerHTML = '';
+  if (S.chapter >= 3) { root.appendChild(el(`<div class="mission-bg">${spaceBG()}</div>`)); return; }
   if (S.chapter >= 2) { root.appendChild(el(`<div class="mission-bg">${riverBG(S.chapter)}</div>`)); return; }
   const v = villageLook();
   root.appendChild(el(`<div class="mission-bg" style="filter:grayscale(${v.gray}%)">${villageBG(v.restore, v.opts)}</div>`));

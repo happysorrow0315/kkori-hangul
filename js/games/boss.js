@@ -2,7 +2,7 @@
 import { speech, el } from '../ui.js';
 import { zombieSVG, villageBG } from '../art.js';
 import { pickWords } from '../adaptive.js';
-import { fill, BOSS_TALK, villageLook } from '../quests.js';
+import { fill, BOSS_TALK, villageLook, typesNow, wordFilter } from '../quests.js';
 import { S } from '../state.js';
 import { GAMES } from './index.js';
 import { TYPE_INFO } from '../quests.js';
@@ -17,7 +17,7 @@ const line = (root, who, text, mood) => speech({ who, mood, text: fill(text), ro
 const TAUNT = ['흥! 이번 건 어림없지!', '이번엔 더 어렵게 해 주마!', '마지막이다! 받아라!'];
 
 export async function playBoss(root) {
-  const types = shuffle(Object.keys(TYPE_INFO)).slice(0, 3);
+  const types = shuffle(typesNow()).slice(0, 3);
   const used = [];
   const all = [];
   let bonusStars = 0;
@@ -29,7 +29,8 @@ export async function playBoss(root) {
   for (let i = 0; i < types.length; i++) {
     const t = types[i];
     const info = TYPE_INFO[t];
-    const [w] = pickWords(1, used, (x) => x.length <= (info.maxLen || 3));
+    const ok = wordFilter(t);
+    const [w] = pickWords(1, used, (x) => ok(x) && x.length <= (info.maxLen || 3));
     used.push(w);
     if (i) { stageBG(root); await line(root, 'zombie', TAUNT[i], 'evil'); }
     root.innerHTML = '';

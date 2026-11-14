@@ -39,6 +39,7 @@ node tools/serve.js          # 다른 창에서 켜 두기
 node tools/test.mjs          # 처음 시작 ~ 미니게임 3종 ~ 꾸미기 ~ 상점 ~ 부모 설정 ~ 30분 잠금
 node tools/test-chapter.mjs  # 게시판에서 골라 가며 1챕터 12개 미션 + 보스까지, 새 놀이 오답 흐름 포함
 CH=2 node tools/test-chapter.mjs  # 1챕터를 깬 기록에서 2챕터로 넘어가 끝까지
+CH=3 node tools/test-chapter.mjs  # 2챕터를 깬 기록에서 3챕터로 (10분쯤 걸림)
 node tools/test-decor.mjs    # 마을 꾸미기: 어울리는 자리, 잘못된 자리 거절, 서랍으로 돌려놓기, 두 테마
 ```
 스크린샷은 `tools/shots/`에 저장된다. Microsoft Edge가 설치되어 있어야 한다.
@@ -47,7 +48,8 @@ node tools/test-decor.mjs    # 마을 꾸미기: 어울리는 자리, 잘못된 
 
 | 파일 | 역할 |
 | --- | --- |
-| `js/words.js` | 챕터별 단어 목록 (1챕터 동화 숲: 받침 없는 글자·복모음, 2챕터 마법 왕국: 받침) |
+| `js/words.js` | 챕터별 단어 목록 (1챕터 동화 숲: 받침 없는 글자·복모음, 2챕터 마법 왕국: 받침, 3챕터 우주: 쌍자음·나머지 받침) |
+| `js/art3.js` | 3챕터 단어 그림과 새 주민 (외계인, 로봇) |
 | `js/art2.js` | 2챕터 단어 그림과 새 주민 (아기 용, 요정) |
 | `js/quests.js` | 이야기 의뢰 8개, 일반 의뢰 생성, 보상 |
 | `js/adaptive.js` | 난이도 자동 조절, 부모 수동 설정 반영 |
@@ -58,6 +60,10 @@ node tools/test-decor.mjs    # 마을 꾸미기: 어울리는 자리, 잘못된 
 | `js/games/bridge.js` | 미니게임 5: 글자 블록으로 다리 만들기 |
 | `js/games/orb.js` | 미니게임 6: 마법 구슬 순서대로 맞히기 |
 | `js/games/hidden.js` | 미니게임 7: 그림 속 숨은 글자 찾기 |
+| `js/games/rocket.js` | 3챕터: 로켓 레이스 |
+| `js/games/alien.js` | 3챕터: 외계인 말 듣기 (굴/꿀/쿨 소리 구별) |
+| `js/games/twin.js` | 3챕터: 쌍둥이 행성 합치기 (ㄱ+ㄱ=ㄲ) |
+| `js/games/stars.js` | 3챕터: 별자리 잇기 |
 | `js/games/boss.js` | 챕터 마지막 좀비괴물 대결 (7종 중 무작위 3종) |
 | `js/scenes/` | 시작, 처음 설정, 마을, 게시판/상점/도감, 부모 설정, 미션 진행 |
 | `js/village-data.js` | 꾸미기 자리(텃밭, 울타리, 빨랫줄...)와 물건별 어울리는 자리 |

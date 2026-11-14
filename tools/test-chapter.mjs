@@ -5,7 +5,7 @@ import fs from 'fs';
 const EDGE = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
 const OUT = 'tools/shots';
 const CH = Number(process.env.CH || 1);
-const P = CH === 2 ? 'c2-' : 'c-';
+const P = CH === 1 ? 'c-' : 'c' + CH + '-';
 fs.mkdirSync(OUT, { recursive: true });
 const browser = await chromium.launch({ executablePath: EDGE });
 const page = await (await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true })).newPage();
@@ -121,10 +121,63 @@ async function playHidden(first) {
     if (await p.count()) { await p.dispatchEvent('pointerdown'); await wait(300); } else await wait(300);
   }
 }
-const PLAY = { find: playFind, dig: playDig, trace: playTrace, fish: playFish, bridge: playBridge, orb: playOrb, hidden: playHidden };
+async function playRocket() {
+  for (let i = 0; i < 400 && await has('.game.rocket'); i++) {
+    if (await has('.speech')) { await clickSpeech(); continue; }
+    const lane = await page.evaluate(() => document.querySelector('.game')?.dataset.lane ?? '');
+    if (lane !== '') await page.locator(`.rk-pad[data-lane="${lane}"]`).dispatchEvent('pointerdown');
+    await wait(90);
+  }
+}
+async function playAlien(first) {
+  for (let i = 0; i < 30 && await has('.game.alien'); i++) {
+    if (await has('.speech')) { await clickSpeech(); continue; }
+    const w = await page.evaluate(() => document.querySelector('.game')?.dataset.w);
+    if (first) { first = false; const wrong = page.locator(`.al-door:not([data-w="${w}"])`).first(); await wrong.click(); await wait(300); await shot(P + 'alien-wrong'); await wait(1200); }
+    const d = page.locator(`.al-door[data-w="${w}"]:not(.open)`);
+    if (await d.count()) { await d.click(); await wait(1600); } else await wait(300);
+  }
+}
+async function clickCenter(loc) { const b = await loc.boundingBox(); if (!b) return false; await page.mouse.click(b.x + b.width / 2, b.y + b.height / 2); return true; }
+async function playTwin(first) {
+  for (let i = 0; i < 60 && await has('.game.twin'); i++) {
+    if (await has('.speech')) { await clickSpeech(); continue; }
+    const n = await need();
+    if (!n) { await wait(400); continue; }
+    const direct = page.locator(`.tw-planet:not(.pop-out)[data-j="${n}"]`).first();
+    if (await direct.count()) { await clickCenter(direct); await wait(350); continue; }
+    const base = await page.evaluate(async (n) => (await import('/js/hangul.js')).DOUBLE_OF[n], n);
+    const two = page.locator(`.tw-planet:not(.pop-out)[data-j="${base}"]`);
+    if (base && (await two.count()) >= 2) {
+      const a = await two.nth(0).boundingBox(), b = await two.nth(1).boundingBox();
+      await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2); await page.mouse.down();
+      await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 8 }); await page.mouse.up();
+      await wait(400);
+      if (first) { first = false; await shot(P + 'twin-merged'); }
+      continue;
+    }
+    await wait(300);
+  }
+}
+async function playStars(first) {
+  for (let i = 0; i < 60 && await has('.game.stars'); i++) {
+    if (await has('.speech')) { await clickSpeech(); continue; }
+    const n = await need();
+    if (!n) { await wait(400); continue; }
+    if (first) {
+      first = false;
+      const wrong = page.locator(`.st-star:not(.on):not([data-j="${n}"])`).first();
+      if (await wrong.count()) { await clickCenter(wrong); await wait(300); await shot(P + 'stars-wrong'); await clickSpeech(); }
+      continue;
+    }
+    const s = page.locator(`.st-star:not(.on)[data-j="${n}"]`).first();
+    if (await s.count()) { await clickCenter(s); await wait(200); } else await wait(300);
+  }
+}
+const PLAY = { find: playFind, dig: playDig, trace: playTrace, fish: playFish, bridge: playBridge, orb: playOrb, hidden: playHidden, rocket: playRocket, alien: playAlien, twin: playTwin, stars: playStars };
 const gameType = () => page.evaluate(() => {
   const g = document.querySelector('.game');
-  return g ? ['find', 'dig', 'trace', 'fish', 'bridge', 'orb', 'hidden'].find((t) => g.classList.contains(t)) : null;
+  return g ? ['find', 'dig', 'trace', 'fish', 'bridge', 'orb', 'hidden', 'rocket', 'alien', 'twin', 'stars'].find((t) => g.classList.contains(t)) : null;
 });
 
 // 게임 하나(또는 보스의 여러 게임)를 결과 화면까지 진행
@@ -136,7 +189,7 @@ async function playUntilResult() {
     const t = await gameType();
     if (!t) { await wait(300); continue; }
     if (!shotOnce.has(t)) { shotOnce.add(t); await shot(P + 'game-' + t); }
-    const first = !seenFirst.has(t) && ['fish', 'bridge', 'orb', 'hidden'].includes(t);
+    const first = !seenFirst.has(t) && ['fish', 'bridge', 'orb', 'hidden', 'alien', 'twin', 'stars'].includes(t);
     seenFirst.add(t);
     await PLAY[t](first);
     await wait(300);
@@ -148,14 +201,16 @@ try {
   await page.goto('http://localhost:8080/tools/blank.html');
   await page.evaluate((ch) => {
     localStorage.clear();
-    localStorage.setItem('kkori-save-v1', JSON.stringify(ch === 2
+    localStorage.setItem('kkori-save-v1', JSON.stringify(ch === 3
+      ? { version: 1, profile: { name: '테스트', avatar: { hair: 'bob' }, catHat: null }, chapter: 2, restore: 100, story: { done: ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8', 'c2s1', 'c2s2', 'c2s3', 'c2s4', 'c2s5', 'c2s6', 'c2s7', 'c2s8'], bossDone: true, chapterClear: true, cleared: [1, 2] }, flags: { villageIntro: true, decor2: true } }
+      : ch === 2
       ? { version: 1, profile: { name: '테스트', avatar: { hair: 'bob' }, catHat: null }, chapter: 1, restore: 100, story: { done: ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8'], bossDone: true, chapterClear: true }, flags: { villageIntro: true } }
       : { version: 1, profile: { name: '테스트', avatar: {}, catHat: null }, flags: { villageIntro: true } }));
   }, CH);
   await page.goto('http://localhost:8080/');
   await page.locator('.title-start').click();
   await page.waitForSelector('.village');
-  if (CH === 2) { await wait(600); await shot(P + 'transition'); }
+  if (CH >= 2) { await wait(600); await shot(P + 'transition'); }
   const played = [];
   for (let m = 0; m < 20; m++) {
     await clearSpeeches();

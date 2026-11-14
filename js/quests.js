@@ -13,8 +13,25 @@ export const TYPE_INFO = {
   bridge: { label: '글자 다리 만들기', words: 2, maxLen: 3 },
   orb: { label: '마법 구슬 맞추기', words: 2 },
   hidden: { label: '숨은 글자 찾기', words: 1, maxLen: 3 },
+  // 3챕터(우주) 새 놀이
+  rocket: { label: '로켓 레이스', words: 2, maxLen: 3 },
+  alien: { label: '외계인 말 듣기', words: 3, skip: ['짜장면'] },
+  twin: { label: '쌍둥이 행성 합치기', words: 2, maxLen: 3, needDouble: true },
+  stars: { label: '별자리 잇기', words: 2, maxLen: 3 },
 };
 export const TYPES = Object.keys(TYPE_INFO);
+// 챕터마다 나오는 놀이 (3챕터부터는 그 챕터만의 새 놀이)
+export const CH_TYPES = {
+  1: ['find', 'dig', 'trace', 'fish', 'bridge', 'orb', 'hidden'],
+  2: ['find', 'dig', 'trace', 'fish', 'bridge', 'orb', 'hidden'],
+  3: ['find', 'dig', 'trace', 'rocket', 'alien', 'twin', 'stars'],
+};
+export const typesNow = () => CH_TYPES[S.chapter] || CH_TYPES[1];
+export function wordFilter(type) {
+  const info = TYPE_INFO[type] || {};
+  return (w) => (!info.maxLen || w.length <= info.maxLen) && !(info.skip || []).includes(w)
+    && (!info.needDouble || /[ㄲㄸㅃㅆㅉ]/.test([...w].map((c) => { const k = c.charCodeAt(0) - 0xac00; return k >= 0 && k < 11172 ? 'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ'[Math.floor(k / 588)] : ''; }).join('')));
+}
 
 // 한 챕터 = 미션 12개 (이야기 8개 + 자유 4개 정도)
 export const MISSIONS_PER_CHAPTER = 12;
@@ -188,11 +205,89 @@ const STORY2 = [
   },
 ];
 
-export const STORIES = { 1: STORY1, 2: STORY2 };
-export const STORY = [...STORY1, ...STORY2];
+// ───── 3챕터: 우주 (쌍자음, 나머지 받침) ─────
+const STORY3 = [
+  {
+    id: 'c3s1', at: 0, giver: 'alien', type: 'rocket', word: '빵', title: '우주 빵집',
+    intro: [
+      { who: 'alien', text: '뿅뿅! 지구 친구 안녕! 큰일 났어. 좀비괴물이 우주에 나타났어!' },
+      { who: 'zombie', mood: 'eat', text: '쌍둥이 글자는 한 입에 하나씩! 냠냠~ 빵이 방이 됐지롱!' },
+      { who: 'kkori', text: '빵에는 ㅂ이 두 개 붙은 쌍둥이 글자 ㅃ이 있어. 로켓을 타고 빵 글자 별을 잡자!' },
+    ],
+    outro: [{ who: 'alien', text: '뿅! 고소한 빵이 돌아왔어! 고마워!' }],
+  },
+  {
+    id: 'c3s2', at: 9, giver: 'robot', type: 'alien', word: '꿀', title: '외계인의 말',
+    intro: [
+      { who: 'robot', text: '삐빅. 외계인 친구 말을 듣고 맞는 문을 열어야 해. 꿀? 굴? 쿨?' },
+      { who: 'kkori', text: 'ㄲ은 힘을 꽉 주어서 내는 소리야. 귀를 쫑긋 세우고 잘 들어 봐!' },
+    ],
+    outro: [{ who: 'robot', text: '삐삐! 정답! 너는 소리를 정말 잘 듣는구나.' }],
+  },
+  {
+    id: 'c3s3', at: 18, giver: 'alien', type: 'twin', word: '딸기', title: '쌍둥이 행성',
+    intro: [
+      { who: 'alien', text: '딸기가 달기가 됐어! ㄸ의 쌍둥이 한쪽이 사라졌대.' },
+      { who: 'kkori', text: 'ㄷ 행성 두 개를 끌어서 붙이면 ㄸ이 돼! 그다음 차례대로 눌러 보자~' },
+    ],
+    outro: [{ who: 'alien', text: '새콤달콤 딸기 완성! 쌍둥이 행성 최고!' }],
+  },
+  {
+    id: 'c3s4', at: 27, giver: 'robot', type: 'stars', word: '토끼', title: '달토끼 별자리',
+    intro: [
+      { who: 'robot', text: '삐빅. 밤하늘의 달토끼 별자리가 흩어졌다.' },
+      { who: 'kkori', text: '토끼를 쓰는 순서대로 별을 이어 보자. ㅌ, ㅗ, ㄲ, ㅣ!' },
+    ],
+    outro: [{ who: 'robot', text: '별자리 복구 완료. 반짝반짝 예쁘다, 삐삐!' }],
+  },
+  {
+    id: 'c3s5', at: 36, giver: 'alien', type: 'find', word: '떡', title: '우주 정거장 가게',
+    intro: [
+      { who: 'alien', text: '우주 정거장 가게에서 떡을 찾아 줘! 덕이랑 헷갈리면 안 돼~' },
+      { who: 'zombie', mood: 'evil', text: '떡? 쫄깃쫄깃 맛있겠다! 내가 먼저 찾을 테다!' },
+    ],
+    outro: [{ who: 'alien', text: '쫀득쫀득 떡이다! 같이 먹자, 뿅!' }],
+  },
+  {
+    id: 'c3s6', at: 45, giver: 'robot', type: 'dig', word: '씨앗', title: '달 표면의 씨앗',
+    intro: [
+      { who: 'robot', text: '달 표면 아래에 씨앗이 묻혀 있다. 삐빅, 발굴 시작!' },
+      { who: 'kkori', text: '씨에는 쌍둥이 ㅆ, 앗에는 받침 ㅅ이 있어. 땅을 파서 찾아보자!' },
+    ],
+    outro: [{ who: 'robot', text: '씨앗을 우주 화분에 심었다. 쑥쑥 자라라, 삐삐!' }],
+  },
+  {
+    id: 'c3s7', at: 54, giver: 'alien', type: 'trace', word: '꽃', title: '우주 꽃밭',
+    intro: [
+      { who: 'alien', text: '우주 꽃밭의 꽃에 좀비괴물이 봉인을 걸었어!' },
+      { who: 'kkori', text: '꽃은 ㄲ, ㅗ를 쓰고 아래에 받침 ㅊ을 써. 천천히 따라 써 보자~' },
+    ],
+    outro: [{ who: 'alien', text: '꽃이 활짝 피었어! 향기가 우주까지 퍼진다~' }],
+  },
+  {
+    id: 'c3s8', at: 63, giver: 'robot', type: 'rocket', word: '코끼리', title: '우주 코끼리',
+    intro: [
+      { who: 'robot', text: '삐빅! 우주 코끼리가 고기리가 될 위기다!' },
+      { who: 'zombie', mood: 'evil', text: '코끼리 코에 있는 쌍둥이 ㄲ, 내가 냠냠 할 거야!' },
+      { who: 'kkori', text: '코, 끼, 리! 로켓을 타고 차례대로 잡자. 아자!' },
+    ],
+    outro: [
+      { who: 'robot', text: '우주 코끼리 구조 완료! 삐삐삐!' },
+      { who: 'kkori', text: '우주가 거의 다 살아났어! 조금만 더 힘내자~' },
+    ],
+  },
+];
+
+export const STORIES = { 1: STORY1, 2: STORY2, 3: STORY3 };
+export const STORY = [...STORY1, ...STORY2, ...STORY3];
 
 // 새 챕터로 넘어갈 때 이야기
 export const CHAPTER_INTRO = {
+  3: [
+    { who: 'owl', text: '에헴! 좀비괴물이 이번엔 로켓을 타고 우주로 날아갔다네!' },
+    { who: 'kkori', mood: 'wow', text: '{A}! 우리도 우주로 출발하자! 좀비괴물이 쌍둥이 글자를 노린대!' },
+    { who: 'kkori', text: 'ㄲ, ㄸ, ㅃ, ㅆ, ㅉ처럼 같은 자음 두 개가 붙은 글자가 쌍둥이 글자야. 한쪽을 먹으면 꿀이 굴이 돼 버려!' },
+  ],
   2: [
     { who: 'owl', text: '에헴! 큰일이네. 좀비괴물이 하늘을 날아서 마법 왕국으로 갔다네!' },
     { who: 'kkori', mood: 'wow', text: '{A}! 이번엔 마법 왕국으로 가자! 좀비괴물이 받침을 노린대!' },
@@ -221,7 +316,16 @@ export const MILESTONES = {
     ],
   },
 };
-export const MILESTONE_GIFTS = { 2: { 25: ['decor:lamp', 2], 75: ['decor:fountain', 1] } };
+MILESTONES[3] = {
+  25: [{ who: 'alien', text: '우주 25%! 뿅뿅~ 고마워서 반짝이 꽃밭을 선물할게!' }],
+  50: [{ who: 'kkori', mood: 'wow', text: '야호! 우주 50%! 우리 기지에 별이 더 많이 떴어!' }],
+  75: [{ who: 'robot', text: '우주 75%. 삐빅, 감사의 뜻으로 벤치를 선물한다.' }],
+  100: [
+    { who: 'kkori', mood: 'wow', text: '해냈다! 우주가 다 살아났어! 그런데... 어디서 으르렁 소리가?' },
+    { who: 'zombie', mood: 'evil', text: '쌍둥이 글자를 다 돌려놓다니! 게시판에서 기다리겠다!' },
+  ],
+};
+export const MILESTONE_GIFTS = { 2: { 25: ['decor:lamp', 2], 75: ['decor:fountain', 1] }, 3: { 25: ['decor:flowers', 2], 75: ['decor:bench', 1] } };
 
 // 보스 대결 대사 (run: 좀비괴물이 도망가는 장면)
 export const BOSS_TALK = {
@@ -251,6 +355,19 @@ export const BOSS_TALK = {
   },
 };
 
+BOSS_TALK[3] = {
+  intro: [
+    { who: 'zombie', mood: 'evil', text: '쌍둥이 글자를 다 돌려놓다니! 우주 끝까지 쫓아왔구나!' },
+    { who: 'kkori', text: '{A}, 우주의 마지막 대결이야! 쌍둥이 글자를 지키자, 아자!' },
+  ],
+  outro: [
+    { who: 'zombie', mood: 'sad', text: '히잉... 쌍둥이 글자는 두 개라서 두 배로 맛있단 말이야...' },
+    { who: 'kkori', text: '좀비괴물아~ 쌍둥이 글자는 둘이 꼭 붙어 있어야 해. 떼어 놓으면 안 돼!' },
+    { who: 'zombie', mood: 'evil', text: '흥! 그럼 바닷속으로 가서 헷갈리는 모음 ㅐ랑 ㅔ를 먹을 테다! 꼬르륵~', run: true },
+    { who: 'kkori', mood: 'wow', text: '{A}! 우주도 지켰어! 3챕터 클리어야!' },
+  ],
+};
+
 const GIVERS_BY_CH = {
   1: {
     find: ['bear', 'rabbit'], dig: ['squirrel', 'owl'], trace: ['owl', 'rabbit'], fish: ['rabbit', 'squirrel'],
@@ -259,6 +376,10 @@ const GIVERS_BY_CH = {
   2: {
     find: ['fairy', 'bear'], dig: ['dragon', 'squirrel'], trace: ['owl', 'fairy'], fish: ['dragon', 'rabbit'],
     bridge: ['dragon', 'bear'], orb: ['owl', 'fairy'], hidden: ['fairy', 'squirrel'],
+  },
+  3: {
+    find: ['alien', 'robot'], dig: ['robot', 'alien'], trace: ['alien', 'owl'],
+    rocket: ['alien', 'robot'], alien: ['robot', 'alien'], twin: ['alien', 'robot'], stars: ['robot', 'owl'],
   },
 };
 const giversFor = (t) => (GIVERS_BY_CH[S.chapter] || GIVERS_BY_CH[1])[t];
@@ -285,6 +406,10 @@ function questText(type, w) {
     case 'bridge': return '강을 건너야 하는데 다리가 없어! 글자 블록으로 다리를 만들어 줘~';
     case 'orb': return `${w} 글자가 마법 구슬이 되어 날아다녀! 순서대로 맞혀 줘!`;
     case 'hidden': return `${w} 글자가 그림 속에 꼭꼭 숨었어. 같이 찾아 볼래?`;
+    case 'rocket': return '로켓을 타고 우주를 날며 글자 별을 모아 줘! 운석은 조심~';
+    case 'alien': return '외계인 친구가 무슨 말을 하는지 잘 듣고 맞는 문을 열어 줘!';
+    case 'twin': return `${w}에 필요한 쌍둥이 행성을 합쳐서 글자를 만들어 줘!`;
+    case 'stars': return `${w} 별자리가 흩어졌어! 별을 순서대로 이어 줘~`;
   }
   return '';
 }
@@ -293,8 +418,7 @@ let qid = Date.now();
 function makeQuest(type, used) {
   const info = TYPE_INFO[type];
   const exclude = used.flatMap((q) => q.words);
-  const filter = info.maxLen ? (w) => w.length <= info.maxLen : null;
-  const words = pickWords(info.words, exclude, filter);
+  const words = pickWords(info.words, exclude, wordFilter(type));
   return { id: 'q' + qid++, type, words, giver: pick(giversFor(type)), text: questText(type, words[0]) };
 }
 
@@ -304,19 +428,19 @@ export const bossReady = () => S.restore >= 100 && !isCleared() && storiesNow().
 
 function storyQuest(s) {
   const info = TYPE_INFO[s.type];
-  const extra = pickWords(info.words - 1, [s.word], info.maxLen ? (w) => w.length <= info.maxLen : null);
+  const extra = pickWords(info.words - 1, [s.word], wordFilter(s.type));
   return { id: 'story-' + s.id, type: s.type, words: [s.word, ...extra], giver: s.giver, text: s.intro[0].text, story: s.id, title: s.title };
 }
 
 // 게시판: 이야기 의뢰 1개 + 서로 다른 놀이 2~3개 (방금 한 놀이는 빼고 무작위)
 export function refreshBoard(force = false) {
-  let normal = force ? [] : S.board.filter((q) => !q.story && !q.boss && TYPE_INFO[q.type]);
+  let normal = force ? [] : S.board.filter((q) => !q.story && !q.boss && typesNow().includes(q.type));
   const s = nextStory();
   const want = s ? 2 : 3;
   const recent = S.recentTypes || [];
   const avoid = new Set([...recent.slice(-2), s?.type].filter(Boolean));
   normal = normal.filter((q) => !avoid.has(q.type)).slice(0, want);
-  const pool = shuffle(TYPES.filter((t) => !avoid.has(t) && !normal.some((q) => q.type === t)));
+  const pool = shuffle(typesNow().filter((t) => !avoid.has(t) && !normal.some((q) => q.type === t)));
   while (normal.length < want && pool.length) normal.push(makeQuest(pool.shift(), normal));
   const out = [...normal];
   // 이미 올라온 이야기 카드는 그대로 (예전 버전 카드라 내용이 다르면 새로 만듦)

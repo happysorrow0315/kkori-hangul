@@ -4,7 +4,7 @@ import { catSVG } from '../art.js';
 import { S } from '../state.js';
 
 export function frame(root, { bg, title, cls }) {
-  const node = el(`<div class="game ${cls}">
+  const node = el(`<div class="game ${cls} ch${S.chapter}">
     <div class="game-bg">${bg}</div>
     <button class="exit-btn" aria-label="나가기">✕</button>
     <div class="game-title">${esc(title)}</div>

@@ -1,6 +1,7 @@
 // 모든 그림은 코드로 그린 SVG
 import { O, wrap, eye, blush, castle } from './svgkit.js';
 import { ITEMS2, VILLAGERS2 } from './art2.js';
+import { ITEMS3, VILLAGERS3 } from './art3.js';
 
 // ───────────────────────── 단어 그림 ─────────────────────────
 const ITEMS = {
@@ -43,11 +44,11 @@ const ITEMS = {
 };
 
 export function itemSVG(word) {
-  const inner = ITEMS[word] || ITEMS2[word];
+  const inner = ITEMS[word] || ITEMS2[word] || ITEMS3[word];
   if (!inner) return wrap(`<rect x="15" y="15" width="70" height="70" rx="14" fill="#eee"/><text x="50" y="62" font-size="36" text-anchor="middle" stroke="none" fill="${O}">?</text>`);
   return wrap(inner);
 }
-export const hasItemArt = (w) => w in ITEMS || w in ITEMS2;
+export const hasItemArt = (w) => w in ITEMS || w in ITEMS2 || w in ITEMS3;
 
 // ───────────────────────── 꾸미기 장식 ─────────────────────────
 export const DECOR = {
@@ -159,7 +160,7 @@ export const VILLAGERS = {
 };
 
 // ───────────────────────── 도구 ─────────────────────────
-Object.assign(VILLAGERS, VILLAGERS2);
+Object.assign(VILLAGERS, VILLAGERS2, VILLAGERS3);
 
 const METAL = ['#c9a06a', '#cfd8e3', '#ffd34d'];
 export function shovelSVG(level = 0) {
@@ -189,7 +190,24 @@ export const brushSVG = () => wrap(`<path d="M62 14 L86 38 L52 72 L28 48Z" fill=
 // 마을 배경은 village-art.js (챕터 테마 + 꾸미기 자리)
 export { villageBG } from './village-art.js';
 
+// 우주 (3챕터 새 놀이 공통)
+export function spaceBG(dense = false) {
+  const stars = Array.from({ length: dense ? 90 : 55 }, (_, i) => `<circle cx="${(i * 137) % 1180}" cy="${(i * 89) % 820}" r="${1 + (i % 3) * 0.8}" fill="#fff" opacity="${0.35 + (i % 5) / 8}"/>`).join('');
+  return `<svg viewBox="0 0 1180 820" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+    <defs><radialGradient id="spc" cx=".5" cy=".4" r=".8"><stop offset="0" stop-color="#3a2f7a"/><stop offset="1" stop-color="#140f33"/></radialGradient></defs>
+    <rect width="1180" height="820" fill="url(#spc)"/>${stars}
+    <g stroke="#5a4032" stroke-width="4"><circle cx="1060" cy="700" r="70" fill="#ff9f6b"/><ellipse cx="1060" cy="700" rx="118" ry="22" fill="none" stroke="#ffd34d" stroke-width="7" transform="rotate(-18 1060 700)"/>
+    <circle cx="90" cy="740" r="46" fill="#7ec4ff"/><path d="M60 724 q16 -10 28 4 q12 10 26 -2" fill="none" stroke="#7cc576" stroke-width="7"/></g>
+  </svg>`;
+}
+
 export function martBG(ch = 1) {
+  if (ch >= 3) return `<svg viewBox="0 0 1180 820" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+    <rect width="1180" height="820" fill="#2e2a5a"/>
+    ${[150, 450, 750, 1050].map((x) => `<g stroke="#5a4032" stroke-width="5"><circle cx="${x}" cy="120" r="58" fill="#cfd8e3"/><circle cx="${x}" cy="120" r="44" fill="#140f33"/></g>${Array.from({ length: 5 }, (_, i) => `<circle cx="${x - 26 + i * 13}" cy="${100 + (i * 17) % 40}" r="2" fill="#fff"/>`).join('')}`).join('')}
+    <g stroke="#4a4580" stroke-width="3">${Array.from({ length: 12 }, (_, i) => `<path d="M${i * 100 + 50} 200 V820"/>`).join('')}</g>
+    <rect y="700" width="1180" height="120" fill="#7ec4ff"/>
+  </svg>`;
   const m = ch >= 2;
   return `<svg viewBox="0 0 1180 820" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
     <rect width="1180" height="820" fill="${m ? '#efe6ff' : '#ffe8c9'}"/>
@@ -201,6 +219,15 @@ export function martBG(ch = 1) {
 }
 
 export function digBG(ch = 1) {
+  if (ch >= 3) return `<svg viewBox="0 0 1180 820" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+    <rect width="1180" height="820" fill="#1d1846"/>
+    ${Array.from({ length: 40 }, (_, i) => `<circle cx="${(i * 131) % 1180}" cy="${(i * 37) % 200}" r="${1.5 + (i % 3)}" fill="#fff" opacity=".7"/>`).join('')}
+    <g stroke="#5a4032" stroke-width="4"><circle cx="1000" cy="90" r="50" fill="#7ec4ff"/><path d="M968 74 q16 -10 28 4 q12 10 26 -2" fill="none" stroke="#7cc576" stroke-width="7"/></g>
+    <path d="M0 230 C200 200 400 220 600 210 C800 200 1000 225 1180 210 V820 H0Z" fill="#b9b4cc"/>
+    <rect y="460" width="1180" height="360" fill="#8f8aa6"/>
+    <path d="M0 460 C200 450 400 470 600 458 C800 448 1000 468 1180 456" fill="none" stroke="#cfcbe0" stroke-width="16"/>
+    <g fill="#a7a2bd" stroke="#5a4032" stroke-width="3"><ellipse cx="260" cy="320" rx="60" ry="16"/><ellipse cx="760" cy="350" rx="80" ry="20"/><ellipse cx="1040" cy="300" rx="40" ry="10"/></g>
+  </svg>`;
   return `<svg viewBox="0 0 1180 820" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
     <rect width="1180" height="820" fill="${ch >= 2 ? '#e6dcff' : '#bfe6ff'}"/>
     ${ch >= 2 ? castle(930, 215, 0.6) : ''}
@@ -212,7 +239,8 @@ export function digBG(ch = 1) {
   </svg>`;
 }
 
-export function traceBG() {
+export function traceBG(ch = 1) {
+  if (ch >= 3) return spaceBG(true);
   return `<svg viewBox="0 0 1180 820" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
     <defs><linearGradient id="tsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4b3a8c"/><stop offset="1" stroke-color="#8e6fd6" stop-color="#8e6fd6"/></linearGradient></defs>
     <rect width="1180" height="820" fill="url(#tsky)"/>
