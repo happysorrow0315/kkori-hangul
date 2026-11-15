@@ -1,7 +1,8 @@
 // 의뢰(퀘스트)와 이야기
 import { S, save, addInv } from './state.js';
 import { pickWords, toolLevel, TOOL_NAMES } from './adaptive.js';
-import { josa, hasBatchim } from './hangul.js';
+import { josa, hasBatchim, decompose, isTrickyVowel } from './hangul.js';
+import { LAST_CHAPTER } from './words.js';
 import { pick, shuffle } from './ui.js';
 
 // 미니게임 7종. words = 미션 한 번에 나오는 단어 수
@@ -18,6 +19,11 @@ export const TYPE_INFO = {
   alien: { label: '외계인 말 듣기', words: 3, skip: ['짜장면'] },
   twin: { label: '쌍둥이 행성 합치기', words: 2, maxLen: 3, needDouble: true },
   stars: { label: '별자리 잇기', words: 2, maxLen: 3 },
+  // 4챕터(바닷속) 새 놀이
+  sub: { label: '잠수함 탐험', words: 2, maxLen: 3 },
+  lock: { label: '보물상자 자물쇠', words: 2, maxLen: 3, needTricky: true },
+  ink: { label: '문어 먹물 지우기', words: 3 },
+  shell: { label: '조개 짝 맞추기', words: 3 },
 };
 export const TYPES = Object.keys(TYPE_INFO);
 // 챕터마다 나오는 놀이 (3챕터부터는 그 챕터만의 새 놀이)
@@ -25,11 +31,16 @@ export const CH_TYPES = {
   1: ['find', 'dig', 'trace', 'fish', 'bridge', 'orb', 'hidden'],
   2: ['find', 'dig', 'trace', 'fish', 'bridge', 'orb', 'hidden'],
   3: ['find', 'dig', 'trace', 'rocket', 'alien', 'twin', 'stars'],
+  4: ['find', 'dig', 'trace', 'sub', 'lock', 'ink', 'shell'],
 };
-export const typesNow = () => CH_TYPES[S.chapter] || CH_TYPES[1];
+// 마지막 챕터까지 다 깨면: 모든 챕터의 놀이와 글자로 자유 놀이 + 복습
+export const reviewMode = () => S.chapter === LAST_CHAPTER && (S.story.cleared || []).includes(LAST_CHAPTER);
+export const typesNow = () => (reviewMode() ? TYPES : CH_TYPES[S.chapter] || CH_TYPES[1]);
+const hasTricky = (w) => [...w].some((c) => { const d = decompose(c); return d && isTrickyVowel(d.jung); });
 export function wordFilter(type) {
   const info = TYPE_INFO[type] || {};
   return (w) => (!info.maxLen || w.length <= info.maxLen) && !(info.skip || []).includes(w)
+    && (!info.needTricky || hasTricky(w))
     && (!info.needDouble || /[ㄲㄸㅃㅆㅉ]/.test([...w].map((c) => { const k = c.charCodeAt(0) - 0xac00; return k >= 0 && k < 11172 ? 'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ'[Math.floor(k / 588)] : ''; }).join('')));
 }
 
@@ -278,11 +289,91 @@ const STORY3 = [
   },
 ];
 
-export const STORIES = { 1: STORY1, 2: STORY2, 3: STORY3 };
-export const STORY = [...STORY1, ...STORY2, ...STORY3];
+// ───── 4챕터: 바닷속 (ㅐ ㅔ ㅒ ㅖ, 복모음) ─────
+const STORY4 = [
+  {
+    id: 'c4s1', at: 0, giver: 'mermaid', type: 'sub', word: '고래', title: '고래를 구해 줘',
+    intro: [
+      { who: 'mermaid', text: '안녕! 나는 인어 아라야. 큰일 났어! 좀비괴물이 바닷속 모음을 뒤죽박죽 섞어 버렸어!' },
+      { who: 'zombie', mood: 'eat', text: '으흐흐~ 고래를 고레로 바꿔 버렸지롱! 꼬르륵~' },
+      { who: 'kkori', text: '고래의 래는 ㄹ에 ㅐ야. ㅏ에 ㅣ를 붙인 ㅐ! 잠수함을 타고 고, 래 거품을 차례로 모으자!' },
+    ],
+    outro: [{ who: 'mermaid', text: '고래가 돌아왔어! 푸우~ 물을 뿜으면서 고맙대!' }],
+  },
+  {
+    id: 'c4s2', at: 9, giver: 'turtle', type: 'lock', word: '조개', title: '거북 할아버지의 보물상자',
+    intro: [
+      { who: 'turtle', text: '허허, 내 보물상자 비밀번호는 조개란다. 그런데 좀비괴물이 다이얼을 마구 돌려 놨지 뭐냐.' },
+      { who: 'kkori', text: '다이얼을 돌려서 모음을 맞추면 상자가 열려! 개는 ㅏ에 ㅣ를 붙인 ㅐ야. 아이 애!' },
+    ],
+    outro: [{ who: 'turtle', text: '허허허, 상자가 열렸구나! 진주를 하나 주마. 고맙다, 꼬마 친구!' }],
+  },
+  {
+    id: 'c4s3', at: 18, giver: 'mermaid', type: 'ink', word: '게', title: '먹물 속 글자',
+    intro: [
+      { who: 'mermaid', text: '좀비괴물을 보고 문어가 깜짝 놀라서 먹물을 뿜었어! 글자가 다 가려졌어.' },
+      { who: 'kkori', text: '먹물을 쓱쓱 지우고 글자를 읽어 봐. 개일까, 게일까? ㅓ에 ㅣ를 붙이면 ㅔ, 어이 에! 집게발 게는 ㅔ야!' },
+    ],
+    outro: [{ who: 'mermaid', text: '맞아, 그건 집게발 게야! 딸깍딸깍~ 게도 고맙대!' }],
+  },
+  {
+    id: 'c4s4', at: 27, giver: 'turtle', type: 'shell', word: '개', title: '조개 속 짝꿍',
+    intro: [
+      { who: 'turtle', text: '조개마다 그림이나 글자가 하나씩 숨어 있단다. 그림과 글자 짝을 찾아 주겠니?' },
+      { who: 'zombie', mood: 'evil', text: '멍멍 개랑 딸깍 게를 섞어 놨지! 헷갈릴걸? 으하하!' },
+      { who: 'kkori', text: '괜찮아! 멍멍 개는 ㅐ, 집게발 게는 ㅔ. 글자 모양을 잘 보면 돼!' },
+    ],
+    outro: [{ who: 'turtle', text: '허허, 짝을 다 찾았구나. 눈이 아주 밝구나!' }],
+  },
+  {
+    id: 'c4s5', at: 36, giver: 'mermaid', type: 'find', word: '케이크', title: '인어의 생일 케이크',
+    intro: [
+      { who: 'mermaid', text: '오늘은 내 생일이야! 그런데 조개 가게에 있던 케이크를 좀비괴물이 노리고 있어!' },
+      { who: 'kkori', text: '케이크의 케는 ㅋ에 ㅔ! 좀비괴물보다 먼저 찾자!' },
+    ],
+    outro: [{ who: 'mermaid', text: '케이크를 지켰다! 같이 먹자~ 생일 축하 노래도 불러 줄래?' }],
+  },
+  {
+    id: 'c4s6', at: 45, giver: 'turtle', type: 'dig', word: '새우', title: '모래 속 새우',
+    intro: [
+      { who: 'turtle', text: '새우가 모래 속에 숨었는데 글자가 조각조각 흩어졌단다.' },
+      { who: 'kkori', text: '모래를 파면 ㅏ랑 ㅣ가 따로 나올 수도 있어. ㅏ 다음에 ㅣ를 붙이면 ㅐ가 돼!' },
+    ],
+    outro: [{ who: 'turtle', text: '새우가 톡톡 튀어나왔구나! 잘했다, 잘했어.' }],
+  },
+  {
+    id: 'c4s7', at: 54, giver: 'mermaid', type: 'trace', word: '시계', title: '멈춘 시계',
+    intro: [
+      { who: 'mermaid', text: '바닷속 시계가 멈췄어! 좀비괴물이 봉인을 걸었대.' },
+      { who: 'kkori', text: '계에는 ㅖ가 있어. ㅕ에 ㅣ를 붙인 거야! 순서대로 따라 쓰면 시계가 다시 째깍째깍!' },
+    ],
+    outro: [{ who: 'mermaid', text: '째깍째깍~ 시계가 다시 움직여! 고마워!' }],
+  },
+  {
+    id: 'c4s8', at: 63, giver: 'turtle', type: 'lock', word: '원숭이', title: '원숭이의 보물',
+    intro: [
+      { who: 'turtle', text: '배를 타고 놀러 온 원숭이가 보물상자를 열지 못해서 울고 있단다.' },
+      { who: 'zombie', mood: 'evil', text: '원숭이? 내가 온숭이로 바꿔 놨지! 으하하~' },
+      { who: 'kkori', text: '원의 ㅝ는 ㅜ에 ㅓ를 붙인 거야. 우어, 워! 다이얼을 잘 돌려 보자!' },
+    ],
+    outro: [
+      { who: 'turtle', text: '원숭이가 신나서 바나나를 나눠 주는구나. 허허!' },
+      { who: 'kkori', text: '바닷속이 거의 다 살아났어! 조금만 더 힘내자~' },
+    ],
+  },
+];
+
+export const STORIES = { 1: STORY1, 2: STORY2, 3: STORY3, 4: STORY4 };
+export const STORY = [...STORY1, ...STORY2, ...STORY3, ...STORY4];
 
 // 새 챕터로 넘어갈 때 이야기
 export const CHAPTER_INTRO = {
+  4: [
+    { who: 'owl', text: '에헴! 좀비괴물이 이번엔 잠수함을 타고 바닷속으로 들어갔다네!' },
+    { who: 'kkori', mood: 'wow', text: '{A}! 바닷속으로 출발! 좀비괴물이 ㅐ랑 ㅔ를 뒤죽박죽 섞어 놓는대!' },
+    { who: 'kkori', text: 'ㅐ는 ㅏ에 ㅣ를 붙여서 아이 애, ㅔ는 ㅓ에 ㅣ를 붙여서 어이 에! 소리는 비슷해도 모양이 달라.' },
+    { who: 'kkori', text: '그래서 뜻을 보고 구별해야 해. 멍멍 개는 ㅐ, 집게발 게는 ㅔ! 같이 기억해 보자~' },
+  ],
   3: [
     { who: 'owl', text: '에헴! 좀비괴물이 이번엔 로켓을 타고 우주로 날아갔다네!' },
     { who: 'kkori', mood: 'wow', text: '{A}! 우리도 우주로 출발하자! 좀비괴물이 쌍둥이 글자를 노린대!' },
@@ -325,7 +416,16 @@ MILESTONES[3] = {
     { who: 'zombie', mood: 'evil', text: '쌍둥이 글자를 다 돌려놓다니! 게시판에서 기다리겠다!' },
   ],
 };
-export const MILESTONE_GIFTS = { 2: { 25: ['decor:lamp', 2], 75: ['decor:fountain', 1] }, 3: { 25: ['decor:flowers', 2], 75: ['decor:bench', 1] } };
+MILESTONES[4] = {
+  25: [{ who: 'mermaid', text: '바닷속 25%! 고마워서 꽃밭을 선물할게!' }],
+  50: [{ who: 'kkori', mood: 'wow', text: '야호! 바닷속 50%! 물고기들이 다시 헤엄치기 시작했어!' }],
+  75: [{ who: 'turtle', text: '바닷속 75%로구나. 허허, 내가 아끼는 분수를 선물로 주마.' }],
+  100: [
+    { who: 'kkori', mood: 'wow', text: '해냈다! 바닷속이 다 살아났어! 그런데... 꼬르륵 소리가?' },
+    { who: 'zombie', mood: 'evil', text: 'ㅐ랑 ㅔ를 다 돌려놓다니! 게시판에서 기다리겠다. 이번이 진짜 마지막이야!' },
+  ],
+};
+export const MILESTONE_GIFTS = { 2: { 25: ['decor:lamp', 2], 75: ['decor:fountain', 1] }, 3: { 25: ['decor:flowers', 2], 75: ['decor:bench', 1] }, 4: { 25: ['decor:flowers', 2], 75: ['decor:fountain', 1] } };
 
 // 보스 대결 대사 (run: 좀비괴물이 도망가는 장면)
 export const BOSS_TALK = {
@@ -368,6 +468,21 @@ BOSS_TALK[3] = {
   ],
 };
 
+BOSS_TALK[4] = {
+  intro: [
+    { who: 'zombie', mood: 'evil', text: '바닷속까지 쫓아왔구나! 이번이 진짜 진짜 마지막 대결이다!' },
+    { who: 'kkori', text: '{A}, 정말 마지막 대결이야! 지금까지 배운 글자 실력을 다 보여 주자, 아자!' },
+  ],
+  outro: [
+    { who: 'zombie', mood: 'sad', text: '으앙... 또 졌어. 사실은... 나도 글자를 읽고 싶었단 말이야.' },
+    { who: 'zombie', mood: 'sad', text: '글자를 못 읽으니까 다들 나랑 안 놀아 줬어. 글자를 몽땅 먹어 버리면 다들 나처럼 될 줄 알았지...' },
+    { who: 'kkori', text: '그랬구나... 좀비괴물아, 글자는 먹는 게 아니라 같이 읽는 거야.' },
+    { who: 'me', text: '좀비괴물아, 우리랑 친구 하자! 글자 읽는 거 내가 알려 줄게.' },
+    { who: 'zombie', mood: 'happy', text: '정말? 나랑 친구 해 줄 거야? 고마워! 이제 글자 안 먹을게. 대신 같이 읽을래!' },
+    { who: 'kkori', mood: 'wow', text: '{A}! 우리가 해냈어! 동화 숲, 마법 왕국, 우주, 바닷속까지 모두 지켰어! 대모험 끝!' },
+  ],
+};
+
 const GIVERS_BY_CH = {
   1: {
     find: ['bear', 'rabbit'], dig: ['squirrel', 'owl'], trace: ['owl', 'rabbit'], fish: ['rabbit', 'squirrel'],
@@ -381,8 +496,13 @@ const GIVERS_BY_CH = {
     find: ['alien', 'robot'], dig: ['robot', 'alien'], trace: ['alien', 'owl'],
     rocket: ['alien', 'robot'], alien: ['robot', 'alien'], twin: ['alien', 'robot'], stars: ['robot', 'owl'],
   },
+  4: {
+    find: ['mermaid', 'turtle'], dig: ['turtle', 'mermaid'], trace: ['mermaid', 'owl'],
+    sub: ['mermaid', 'turtle'], lock: ['turtle', 'mermaid'], ink: ['mermaid', 'turtle'], shell: ['turtle', 'mermaid'],
+  },
 };
-const giversFor = (t) => (GIVERS_BY_CH[S.chapter] || GIVERS_BY_CH[1])[t];
+// 지금 챕터에 없는 놀이(자유 놀이)는 그 놀이가 나왔던 챕터의 주민이 부탁
+const giversFor = (t) => (GIVERS_BY_CH[S.chapter] || {})[t] || [4, 3, 2, 1].map((c) => GIVERS_BY_CH[c][t]).find(Boolean) || ['bear'];
 
 export const isCleared = (ch = S.chapter) => (S.story.cleared || []).includes(ch);
 
@@ -410,12 +530,16 @@ function questText(type, w) {
     case 'alien': return '외계인 친구가 무슨 말을 하는지 잘 듣고 맞는 문을 열어 줘!';
     case 'twin': return `${w}에 필요한 쌍둥이 행성을 합쳐서 글자를 만들어 줘!`;
     case 'stars': return `${w} 별자리가 흩어졌어! 별을 순서대로 이어 줘~`;
+    case 'sub': return '잠수함을 타고 글자 거품을 모아 줘! 해파리는 조심~';
+    case 'lock': return '보물상자 비밀번호는 그림의 이름이야! 다이얼을 돌려서 열어 줘~';
+    case 'ink': return '문어가 깜짝 놀라서 먹물을 뿜었어! 먹물을 지우고 무슨 글자인지 읽어 줘~';
+    case 'shell': return '조개 속에 그림과 글자가 숨어 있어. 짝꿍을 찾아 줘!';
   }
   return '';
 }
 
 let qid = Date.now();
-function makeQuest(type, used) {
+export function makeQuest(type, used = []) {
   const info = TYPE_INFO[type];
   const exclude = used.flatMap((q) => q.words);
   const words = pickWords(info.words, exclude, wordFilter(type));

@@ -37,9 +37,10 @@ async function playDig() {
   for (let i = 0; i < await tiles.count(); i++) for (let k = 0; k < 2; k++) await tiles.nth(i).dispatchEvent('pointerdown');
   await wait(600);
   const seq = await page.evaluate(async (w) => {
-    const { syllables, VOWEL_SPLIT, isCompound } = await import('/js/hangul.js');
+    const { syllables, VOWEL_SPLIT, AE_SPLIT } = await import('/js/hangul.js');
+    const SPLIT = { ...VOWEL_SPLIT, ...AE_SPLIT }; const isCompound = (j) => j in SPLIT;
     const tray = [...document.querySelectorAll('.jamo-tile')].map((t) => t.dataset.j);
-    return syllables(w).flatMap((d) => [d.cho, ...(isCompound(d.jung) && !tray.includes(d.jung) ? VOWEL_SPLIT[d.jung] : [d.jung]), ...(d.jong ? [d.jong] : [])]);
+    return syllables(w).flatMap((d) => [d.cho, ...(isCompound(d.jung) && !tray.includes(d.jung) ? SPLIT[d.jung] : [d.jung]), ...(d.jong ? [d.jong] : [])]);
   }, w);
   for (const j of seq) { await page.locator(`.jamo-tile:not(.used)[data-j="${j}"]`).first().click(); await wait(80); }
   await page.locator('.dig-check').click();
@@ -174,10 +175,74 @@ async function playStars(first) {
     if (await s.count()) { await clickCenter(s); await wait(200); } else await wait(300);
   }
 }
-const PLAY = { find: playFind, dig: playDig, trace: playTrace, fish: playFish, bridge: playBridge, orb: playOrb, hidden: playHidden, rocket: playRocket, alien: playAlien, twin: playTwin, stars: playStars };
+async function playSub() {
+  for (let i = 0; i < 300 && await has('.game.sub'); i++) {
+    if (await has('.speech')) { await clickSpeech(); continue; }
+    const n = await need();
+    if (!n) { await wait(300); continue; }
+    const b = page.locator(`.sb-bubble[data-s="${n}"]:not(.pop):not(.bad)`).first();
+    const box = (await b.count()) ? await b.boundingBox() : null;
+    if (!box) { await wait(200); continue; }
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await wait(260);
+    await page.mouse.up();
+  }
+}
+async function playLock(first) {
+  for (let i = 0; i < 20 && await has('.game.lock'); i++) {
+    if (await has('.speech')) { await clickSpeech(); continue; }
+    const w = await page.evaluate(() => document.querySelector('.game')?.dataset.w);
+    if (await has('.lk-chest.open')) { await wait(400); continue; }
+    if (first) { first = false; await page.locator('.lk-open').click(); await wait(400); await shot(P + 'lock-wrong'); await wait(1500); }
+    const dials = page.locator('.lk-dial:not(.fixed)');
+    for (let d = 0; d < await dials.count(); d++) {
+      const dial = dials.nth(d);
+      const want = [...w][Number(await dial.getAttribute('data-i'))];
+      for (let k = 0; k < 6 && (await dial.locator('.lk-syl').innerText()) !== want; k++) { await dial.locator('.lk-down').click(); await wait(60); }
+    }
+    await page.locator('.lk-open').click();
+    await wait(1800);
+  }
+}
+async function playInk(first) {
+  for (let i = 0; i < 20 && await has('.game.ink'); i++) {
+    if (await has('.speech')) { await clickSpeech(); continue; }
+    const w = await page.evaluate(() => document.querySelector('.game')?.dataset.w);
+    if (await has('.ik-choice.right')) { await wait(400); continue; }
+    const box = await page.locator('.ik-ink').boundingBox();
+    await page.mouse.move(box.x + 30, box.y + box.height * 0.35); await page.mouse.down();
+    for (let k = 0; k <= 8; k++) await page.mouse.move(box.x + 30 + (k * (box.width - 60)) / 8, box.y + box.height * (k % 2 ? 0.65 : 0.35), { steps: 3 });
+    await page.mouse.up();
+    if (first) { first = false; await shot(P + 'ink-rubbed'); const wrong = page.locator(`.ik-choice:not([data-w="${w}"])`).first(); await wrong.click(); await wait(300); await shot(P + 'ink-wrong'); await wait(1500); }
+    await page.locator(`.ik-choice[data-w="${w}"]`).click();
+    await wait(1600);
+  }
+}
+async function playShell(first) {
+  await wait(3000);
+  for (let i = 0; i < 40 && await has('.game.shell'); i++) {
+    if (await has('.speech')) { await clickSpeech(); continue; }
+    const left = await page.evaluate(() => [...new Set([...document.querySelectorAll('.sh-clam:not(.done)')].map((c) => c.dataset.w))]);
+    if (!left.length) { await wait(400); continue; }
+    if (first) {
+      first = false;
+      const other = left.find((x) => x !== left[0]);
+      if (other) {
+        await page.locator(`.sh-clam[data-kind="pic"][data-w="${left[0]}"]`).click(); await wait(150);
+        await page.locator(`.sh-clam[data-kind="word"][data-w="${other}"]`).click(); await wait(300);
+        await shot(P + 'shell-miss'); await wait(1800);
+        continue;
+      }
+    }
+    await page.locator(`.sh-clam[data-kind="pic"][data-w="${left[0]}"]`).click(); await wait(150);
+    await page.locator(`.sh-clam[data-kind="word"][data-w="${left[0]}"]`).click(); await wait(700);
+  }
+}
+const PLAY = { find: playFind, dig: playDig, trace: playTrace, fish: playFish, bridge: playBridge, orb: playOrb, hidden: playHidden, rocket: playRocket, alien: playAlien, twin: playTwin, stars: playStars, sub: playSub, lock: playLock, ink: playInk, shell: playShell };
 const gameType = () => page.evaluate(() => {
   const g = document.querySelector('.game');
-  return g ? ['find', 'dig', 'trace', 'fish', 'bridge', 'orb', 'hidden', 'rocket', 'alien', 'twin', 'stars'].find((t) => g.classList.contains(t)) : null;
+  return g ? ['find', 'dig', 'trace', 'fish', 'bridge', 'orb', 'hidden', 'rocket', 'alien', 'twin', 'stars', 'sub', 'lock', 'ink', 'shell'].find((t) => g.classList.contains(t)) : null;
 });
 
 // 게임 하나(또는 보스의 여러 게임)를 결과 화면까지 진행
@@ -189,7 +254,7 @@ async function playUntilResult() {
     const t = await gameType();
     if (!t) { await wait(300); continue; }
     if (!shotOnce.has(t)) { shotOnce.add(t); await shot(P + 'game-' + t); }
-    const first = !seenFirst.has(t) && ['fish', 'bridge', 'orb', 'hidden', 'alien', 'twin', 'stars'].includes(t);
+    const first = !seenFirst.has(t) && ['fish', 'bridge', 'orb', 'hidden', 'alien', 'twin', 'stars', 'lock', 'ink', 'shell'].includes(t);
     seenFirst.add(t);
     await PLAY[t](first);
     await wait(300);
@@ -201,7 +266,10 @@ try {
   await page.goto('http://localhost:8080/tools/blank.html');
   await page.evaluate((ch) => {
     localStorage.clear();
-    localStorage.setItem('kkori-save-v1', JSON.stringify(ch === 3
+    const done3 = ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8', 'c2s1', 'c2s2', 'c2s3', 'c2s4', 'c2s5', 'c2s6', 'c2s7', 'c2s8', 'c3s1', 'c3s2', 'c3s3', 'c3s4', 'c3s5', 'c3s6', 'c3s7', 'c3s8'];
+    localStorage.setItem('kkori-save-v1', JSON.stringify(ch === 4
+      ? { version: 1, profile: { name: '테스트', avatar: { hair: 'bob' }, catHat: null }, chapter: 3, restore: 100, story: { done: done3, bossDone: true, chapterClear: true, cleared: [1, 2, 3] }, flags: { villageIntro: true, decor2: true } }
+      : ch === 3
       ? { version: 1, profile: { name: '테스트', avatar: { hair: 'bob' }, catHat: null }, chapter: 2, restore: 100, story: { done: ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8', 'c2s1', 'c2s2', 'c2s3', 'c2s4', 'c2s5', 'c2s6', 'c2s7', 'c2s8'], bossDone: true, chapterClear: true, cleared: [1, 2] }, flags: { villageIntro: true, decor2: true } }
       : ch === 2
       ? { version: 1, profile: { name: '테스트', avatar: { hair: 'bob' }, catHat: null }, chapter: 1, restore: 100, story: { done: ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8'], bossDone: true, chapterClear: true }, flags: { villageIntro: true } }

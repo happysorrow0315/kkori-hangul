@@ -2,6 +2,8 @@
 import { O, wrap, eye, blush, castle } from './svgkit.js';
 import { ITEMS2, VILLAGERS2 } from './art2.js';
 import { ITEMS3, VILLAGERS3 } from './art3.js';
+import { ITEMS4, VILLAGERS4, seaBG } from './art4.js';
+export { seaBG };
 
 // ───────────────────────── 단어 그림 ─────────────────────────
 const ITEMS = {
@@ -44,11 +46,11 @@ const ITEMS = {
 };
 
 export function itemSVG(word) {
-  const inner = ITEMS[word] || ITEMS2[word] || ITEMS3[word];
+  const inner = ITEMS[word] || ITEMS2[word] || ITEMS3[word] || ITEMS4[word];
   if (!inner) return wrap(`<rect x="15" y="15" width="70" height="70" rx="14" fill="#eee"/><text x="50" y="62" font-size="36" text-anchor="middle" stroke="none" fill="${O}">?</text>`);
   return wrap(inner);
 }
-export const hasItemArt = (w) => w in ITEMS || w in ITEMS2 || w in ITEMS3;
+export const hasItemArt = (w) => w in ITEMS || w in ITEMS2 || w in ITEMS3 || w in ITEMS4;
 
 // ───────────────────────── 꾸미기 장식 ─────────────────────────
 export const DECOR = {
@@ -98,6 +100,8 @@ export function catSVG({ hat = null, mood = 'happy' } = {}) {
 export function zombieSVG(mood = 'evil') {
   const mouth = mood === 'sad'
     ? `<path d="M48 82 Q60 74 72 82" fill="none" stroke-width="3.5"/>`
+    : mood === 'happy'
+      ? `<path d="M44 74 Q60 94 76 74 Z" fill="#5a2a3a"/><path d="M52 84 Q60 90 68 84" fill="#ff7b9b" stroke="none"/>`
     : mood === 'eat'
       ? `<ellipse cx="60" cy="80" rx="18" ry="13" fill="#5a2a3a"/><rect x="52" y="67" width="7" height="8" rx="1.5" fill="#fff"/><ellipse cx="62" cy="86" rx="8" ry="4" fill="#ff7b9b" stroke="none"/>`
       : `<path d="M44 76 Q60 90 76 76 Q60 82 44 76Z" fill="#5a2a3a"/><rect x="54" y="77" width="6" height="6" rx="1" fill="#fff" stroke-width="1.5"/>`;
@@ -160,7 +164,7 @@ export const VILLAGERS = {
 };
 
 // ───────────────────────── 도구 ─────────────────────────
-Object.assign(VILLAGERS, VILLAGERS2, VILLAGERS3);
+Object.assign(VILLAGERS, VILLAGERS2, VILLAGERS3, VILLAGERS4);
 
 const METAL = ['#c9a06a', '#cfd8e3', '#ffd34d'];
 export function shovelSVG(level = 0) {
@@ -202,6 +206,13 @@ export function spaceBG(dense = false) {
 }
 
 export function martBG(ch = 1) {
+  if (ch >= 4) return `<svg viewBox="0 0 1180 820" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+    <defs><linearGradient id="smart" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8ee0ee"/><stop offset="1" stop-color="#3a9ad0"/></linearGradient></defs>
+    <rect width="1180" height="820" fill="url(#smart)"/>
+    ${Array.from({ length: 16 }, (_, i) => `<circle cx="${(i * 151) % 1180}" cy="${40 + ((i * 61) % 180)}" r="${5 + (i % 3) * 4}" fill="none" stroke="#fff" stroke-width="2.5" opacity=".45"/>`).join('')}
+    <g fill="#ffc2d1" stroke="#5a4032" stroke-width="3">${[100, 400, 700, 1000].map((x) => `<path d="M${x} 200 C${x - 10} 150 ${x + 90} 150 ${x + 80} 200Z"/>`).join('')}</g>
+    <rect y="700" width="1180" height="120" fill="#f5e1b0"/>
+  </svg>`;
   if (ch >= 3) return `<svg viewBox="0 0 1180 820" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
     <rect width="1180" height="820" fill="#2e2a5a"/>
     ${[150, 450, 750, 1050].map((x) => `<g stroke="#5a4032" stroke-width="5"><circle cx="${x}" cy="120" r="58" fill="#cfd8e3"/><circle cx="${x}" cy="120" r="44" fill="#140f33"/></g>${Array.from({ length: 5 }, (_, i) => `<circle cx="${x - 26 + i * 13}" cy="${100 + (i * 17) % 40}" r="2" fill="#fff"/>`).join('')}`).join('')}
@@ -219,6 +230,16 @@ export function martBG(ch = 1) {
 }
 
 export function digBG(ch = 1) {
+  if (ch >= 4) return `<svg viewBox="0 0 1180 820" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+    <defs><linearGradient id="sdig" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5fd0e6"/><stop offset="1" stop-color="#2a8ac4"/></linearGradient></defs>
+    <rect width="1180" height="820" fill="url(#sdig)"/>
+    <g fill="#fff" opacity=".12">${[160, 520, 900].map((x) => `<path d="M${x} 0 L${x + 80} 0 L${x - 40} 460 L${x - 120} 460Z"/>`).join('')}</g>
+    ${Array.from({ length: 14 }, (_, i) => `<circle cx="${(i * 157) % 1180}" cy="${30 + ((i * 53) % 180)}" r="${4 + (i % 3) * 3}" fill="none" stroke="#fff" stroke-width="2.5" opacity=".4"/>`).join('')}
+    <path d="M0 230 C200 200 400 220 600 210 C800 200 1000 225 1180 210 V820 H0Z" fill="#3f9aa8" opacity=".55"/>
+    <rect y="460" width="1180" height="360" fill="#e8cf96"/>
+    <path d="M0 460 C200 450 400 470 600 458 C800 448 1000 468 1180 456" fill="none" stroke="#f5e1b0" stroke-width="16"/>
+    <g fill="#3f9a6a">${[90, 300, 860, 1080].map((x) => `<path d="M${x} 460 C${x - 14} 400 ${x + 16} 360 ${x} 300 L${x + 12} 300 C${x + 26} 360 ${x - 2} 400 ${x + 14} 460Z"/>`).join('')}</g>
+  </svg>`;
   if (ch >= 3) return `<svg viewBox="0 0 1180 820" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
     <rect width="1180" height="820" fill="#1d1846"/>
     ${Array.from({ length: 40 }, (_, i) => `<circle cx="${(i * 131) % 1180}" cy="${(i * 37) % 200}" r="${1.5 + (i % 3)}" fill="#fff" opacity=".7"/>`).join('')}
@@ -240,6 +261,7 @@ export function digBG(ch = 1) {
 }
 
 export function traceBG(ch = 1) {
+  if (ch >= 4) return seaBG(true);
   if (ch >= 3) return spaceBG(true);
   return `<svg viewBox="0 0 1180 820" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
     <defs><linearGradient id="tsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4b3a8c"/><stop offset="1" stroke-color="#8e6fd6" stop-color="#8e6fd6"/></linearGradient></defs>

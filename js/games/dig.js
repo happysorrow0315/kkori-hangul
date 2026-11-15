@@ -2,13 +2,16 @@
 import { el, onTap, shuffle, pick, speech, sleep, confetti, shake, esc, toast } from '../ui.js';
 import { itemSVG, digBG, shovelSVG, wormSVG, boneSVG, starSVG } from '../art.js';
 import { say, sfx, stopSay } from '../audio.js';
-import { syllables, compose, combineVowels, isVowel, isCompound, VOWEL_SPLIT, SIMILAR, SIMILAR_JONG, josa } from '../hangul.js';
+import { syllables, compose, combineVowels, isVowel, VOWEL_SPLIT, AE_SPLIT, SIMILAR, SIMILAR_JONG, josa } from '../hangul.js';
 import { ALL_WORDS } from '../words.js';
 import { S } from '../state.js';
 import { digDecoys, splitChance, toolLevel, record, bumpSkill } from '../adaptive.js';
 import { frame, confirmExit, dots } from './common.js';
 
 const COLS = 6, ROWS = 3;
+// 나눠 묻을 수 있는 모음: 복모음 + (4챕터부터) ㅐ=ㅏ+ㅣ, ㅔ=ㅓ+ㅣ
+const splitOf = (j) => VOWEL_SPLIT[j] || (S.chapter >= 4 ? AE_SPLIT[j] : null);
+const isCompound = (j) => !!splitOf(j);
 
 export async function playDig(root, { words, boss = false }) {
   const level = toolLevel('dig');
@@ -48,7 +51,7 @@ export async function playDig(root, { words, boss = false }) {
     const needed = [];
     sy.forEach((d) => {
       needed.push(d.cho);
-      if (split && isCompound(d.jung)) needed.push(...VOWEL_SPLIT[d.jung]);
+      if (split && isCompound(d.jung)) needed.push(...splitOf(d.jung));
       else needed.push(d.jung);
       if (d.jong) needed.push(d.jong);
     });
@@ -223,7 +226,7 @@ export async function playDig(root, { words, boss = false }) {
         const want = sy[i];
         if (s.cho.j === want.cho && s.jung.j === want.jung && (s.jong?.j || '') === want.jong) return;
         if (s.cho.j === want.cho && s.jung.j === want.jung) { tip = '받침을 다시 봐! 아래에 붙는 글자야.'; return; }
-        if (isCompound(want.jung) && s.jung.j === VOWEL_SPLIT[want.jung][0] && s.cho.j === want.cho) tip = `${s.jung.j}에 모음을 하나 더 합쳐 봐!`;
+        if (isCompound(want.jung) && s.jung.j === splitOf(want.jung)[0] && s.cho.j === want.cho) tip = `${s.jung.j}에 모음을 하나 더 합쳐 봐!`;
       });
       const isWord = ALL_WORDS.includes(made);
       const msg = isWord
@@ -254,8 +257,8 @@ export async function playDig(root, { words, boss = false }) {
         let need = null;
         if (!s.cho || s.cho.j !== want.cho) need = [want.cho];
         else if (!s.jung || s.jung.j !== want.jung) {
-          need = isCompound(want.jung) ? [want.jung, ...VOWEL_SPLIT[want.jung]] : [want.jung];
-          if (s.jung && isCompound(want.jung) && s.jung.j === VOWEL_SPLIT[want.jung][0]) need = [VOWEL_SPLIT[want.jung][1]];
+          need = isCompound(want.jung) ? [want.jung, ...splitOf(want.jung)] : [want.jung];
+          if (s.jung && isCompound(want.jung) && s.jung.j === splitOf(want.jung)[0]) need = [splitOf(want.jung)[1]];
         } else if (want.jong && (!s.jong || s.jong.j !== want.jong)) need = [want.jong];
         if (!need) continue;
         const t = [...tray.querySelectorAll('.jamo-tile:not(.used)')].find((x) => need.includes(x.dataset.j));

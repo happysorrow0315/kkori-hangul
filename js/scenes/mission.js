@@ -2,7 +2,7 @@
 import { S, save } from '../state.js';
 import { go } from '../router.js';
 import { sceneEl, el, speech, onTap, sleep, confetti, esc, starsText } from '../ui.js';
-import { villageBG, riverBG, spaceBG, itemSVG, shovelSVG, wandSVG, shoeSVG, starSVG } from '../art.js';
+import { villageBG, riverBG, spaceBG, seaBG, itemSVG, shovelSVG, wandSVG, shoeSVG, starSVG } from '../art.js';
 import { say, sfx } from '../audio.js';
 import { STORY, applyResults, fill, MILESTONES, villageLook } from '../quests.js';
 import { CHAPTERS, LAST_CHAPTER } from '../words.js';
@@ -14,6 +14,7 @@ import { GAMES } from '../games/index.js';
 
 function backdrop(root) {
   root.innerHTML = '';
+  if (S.chapter >= 4) { root.appendChild(el(`<div class="mission-bg">${seaBG()}</div>`)); return; }
   if (S.chapter >= 3) { root.appendChild(el(`<div class="mission-bg">${spaceBG()}</div>`)); return; }
   if (S.chapter >= 2) { root.appendChild(el(`<div class="mission-bg">${riverBG(S.chapter)}</div>`)); return; }
   const v = villageLook();
@@ -59,14 +60,14 @@ function showResults(root, q, sum) {
     backdrop(root);
     const toolIcon = { find: shoeSVG, dig: shovelSVG, trace: wandSVG };
     const node = el(`<div class="result">
-      <div class="result-title">${q.boss ? `${S.chapter}챕터 클리어!` : '미션 성공!'}</div>
+      <div class="result-title">${q.boss ? (S.chapter === LAST_CHAPTER ? '대모험 끝! 모든 챕터 클리어!' : `${S.chapter}챕터 클리어!`) : '미션 성공!'}</div>
       <div class="result-items">${sum.items.map((r) => `
         <div class="result-item"><div class="result-pic">${itemSVG(r.w)}</div><div class="result-word">${esc(r.w)}</div><div class="result-stars">${starsText(r.stars)}</div>
         ${sum.newDex.includes(r.w) ? '<div class="result-new">도감 등록!</div>' : ''}</div>`).join('')}</div>
       <div class="result-row"><span class="result-star">${starSVG()}</span> 별 +${sum.stars}</div>
       ${sum.restoreGain ? `<div class="result-row">${CHAPTERS[S.chapter]?.progress || '마을 복원'} <div class="restore-bar"><i style="width:${sum.restoreBefore}%"></i></div> <b>${S.restore}%</b></div>` : ''}
       ${sum.upgrades.map((u) => `<div class="result-upgrade"><span class="up-icon">${toolIcon[u.type](u.level)}</span>${esc(josa(TOOL_NAMES[u.type][u.level - 1], '이/가'))} <b>${esc(TOOL_NAMES[u.type][u.level])}</b>${josa(TOOL_NAMES[u.type][u.level], '으로/로').slice(TOOL_NAMES[u.type][u.level].length)} 업그레이드!</div>`).join('')}
-      ${q.boss ? `<div class="result-row small">${S.chapter < LAST_CHAPTER ? `마을로 가면 ${S.chapter + 1}챕터 ${CHAPTERS[S.chapter + 1].name} 모험이 시작돼요!` : `${S.chapter + 1}챕터는 다음 업데이트에서 열려요!`}</div>` : ''}
+      ${q.boss ? `<div class="result-row small">${S.chapter < LAST_CHAPTER ? `마을로 가면 ${S.chapter + 1}챕터 ${CHAPTERS[S.chapter + 1].name} 모험이 시작돼요!` : '마을로 가면 좀비괴물이 친구가 되어 기다리고 있어요. 이제 모든 놀이를 골라서 할 수 있어요!'}</div>` : ''}
       <button class="btn big result-go">마을로 가기</button>
     </div>`);
     root.appendChild(node);

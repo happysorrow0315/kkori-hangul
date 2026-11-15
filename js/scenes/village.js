@@ -1,7 +1,7 @@
 // 고양이 마을 (본거지): 둘러보기 + 어울리는 자리에 꾸미기
 import { S, save, addInv } from '../state.js';
-import { el, onTap, speech, toStage, toast, esc, pick } from '../ui.js';
-import { villageBG, catSVG, avatarSVG, itemSVG, decorSVG, DECOR, starSVG, boardSVG, brushSVG, shopSVG, bookSVG, gearSVG, lockSVG } from '../art.js';
+import { el, onTap, speech, toStage, toast, esc, pick, confetti } from '../ui.js';
+import { villageBG, catSVG, zombieSVG, avatarSVG, itemSVG, decorSVG, DECOR, starSVG, boardSVG, brushSVG, shopSVG, bookSVG, gearSVG, lockSVG } from '../art.js';
 import { say, sfx } from '../audio.js';
 import { refreshBoard, nextStory, bossReady, fill, villageLook, canAdvance, advanceChapter, CHAPTER_INTRO, isCleared } from '../quests.js';
 import { CHAPTERS, LAST_CHAPTER } from '../words.js';
@@ -49,6 +49,7 @@ export function villageScene(root) {
     <div class="vplaced"></div>
     <div class="vchar me">${avatarSVG(S.profile?.avatar)}</div>
     <div class="vchar cat"></div>
+    <div class="vchar zombie" hidden>${zombieSVG('happy')}</div>
     <div class="hud">
       <div class="hud-name">${esc(S.profile?.name || '')}</div>
       <div class="hud-restore"><span>마을 복원</span><div class="restore-bar"><i></i></div><b></b></div>
@@ -389,6 +390,20 @@ export function villageScene(root) {
     const s = nextStory();
     speech({ who: 'kkori', text: bossReady() ? '앗! 좀비괴물이 게시판에서 기다리고 있어! 마지막 대결이야!' : s ? '어라? 게시판에 중요한 의뢰가 왔어! 얼른 도와주러 가자!' : pick(lines) });
   });
+  // 대모험을 끝내면 좀비괴물이 마을 친구가 됨
+  const friend = () => isCleared(LAST_CHAPTER);
+  $('.vchar.zombie').hidden = !friend();
+  onTap($('.vchar.zombie'), () => {
+    const z = $('.vchar.zombie');
+    z.classList.remove('boing'); void z.offsetWidth; z.classList.add('boing');
+    speech({ who: 'zombie', mood: 'happy', text: pick([
+      '헤헤, 나 이제 글자 읽을 수 있다! 개는 멍멍, 게는 집게발!',
+      '글자는 먹는 것보다 읽는 게 더 재밌어. 진짜야!',
+      '오늘은 어떤 놀이 할 거야? 나도 구경할래!',
+      '꿀이랑 굴은 소리가 달라. 꿀은 힘을 꽉! 헤헤.',
+      '받침이 있어야 곰이 곰이지. 받침 없으면 고야, 고!',
+    ]) });
+  });
   onTap($('.vchar.me'), () => { const c = $('.vchar.me'); c.classList.remove('boing'); void c.offsetWidth; c.classList.add('boing'); });
 
   drawHud();
@@ -412,10 +427,17 @@ export function villageScene(root) {
       await speech({ who: 'kkori', text: '과일은 텃밭에 심으면 쑥쑥 자라고, 동물은 울타리에서 뛰어놀고, 옷은 빨랫줄에 걸 수 있어. 놓아뒀던 물건은 서랍에 넣어 놨어!' });
       $('.vbtn.deco').classList.add('glow');
     })();
-  } else if (isCleared(S.chapter) && S.chapter === LAST_CHAPTER && !S.flags['waitCh' + (S.chapter + 1)]) {
-    S.flags['waitCh' + (S.chapter + 1)] = true;
+  } else if (friend() && S.chapter === LAST_CHAPTER && !S.flags.ending) {
+    S.flags.ending = true;
     save();
-    speech({ who: 'kkori', text: `${S.chapter + 1}챕터는 곧 열려! 그동안 게시판 의뢰로 별을 모으고 마을을 꾸미면서 기다리자~` });
+    (async () => {
+      confetti(590, 300, 50);
+      await speech({ who: 'kkori', mood: 'wow', text: fill('{A}! 봐 봐, 좀비괴물이 우리 마을에 놀러 왔어!') });
+      await speech({ who: 'zombie', mood: 'happy', text: '헤헤, 안녕! 이제 나도 이 마을 친구야. 글자 먹는 대신 같이 읽을 거야!' });
+      await speech({ who: 'kkori', text: '이제 게시판에 골라 놀기가 생겼어! 1챕터부터 4챕터까지 모든 놀이를 마음대로 골라서 할 수 있어.' });
+      await speech({ who: 'kkori', text: '복습 의뢰에는 예전에 헷갈렸던 글자가 더 자주 나온대. 별도 계속 모을 수 있어~' });
+      $('.vbtn.board').classList.add('glow');
+    })();
   } else if (!S.flags.villageIntro) {
     S.flags.villageIntro = true;
     save();

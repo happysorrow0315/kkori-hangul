@@ -596,3 +596,83 @@ button { font-family: inherit; color: inherit; }
 .st-pic { position: absolute; width: 260px; height: 260px; transform: translate(-50%, -50%) scale(.4); opacity: 0; z-index: 3; pointer-events: none; transition: opacity .6s, transform .6s; }
 .st-pic.show { opacity: .95; transform: translate(-50%, -50%) scale(1); }
 .st-tip { position: relative; font-size: 20px; border-radius: 16px; padding: 6px 14px; margin-left: auto; line-height: 1.35; }
+
+/* ───── 4챕터 바닷속 놀이 ───── */
+.game.ch4 .game-title { background: rgba(255, 255, 255, .92); }
+.game.dig.ch4 .dig-tile { border-color: #a88a4a; background: #d9bd84; }
+.game.dig.ch4 .dig-dirt { background: radial-gradient(circle at 30% 30%, #fff3d6 0 10%, transparent 11%), radial-gradient(circle at 70% 60%, #c4a46a 0 8%, transparent 9%), linear-gradient(#f5e1b0 0 16%, #d9bd84 16%); }
+.game.dig.ch4 .dig-tile.open { background: #b8985e; }
+.game.ch4 .trace-tip, .sb-tip, .lk-tip, .ik-tip, .sh-tip { color: #fff; background: rgba(0, 50, 90, .45); }
+.g-slot.peek { color: #2a8ac4; background: #e6fbff; }
+
+/* 잠수함 탐험 */
+.sb-tip { position: relative; font-size: 20px; border-radius: 16px; padding: 6px 14px; margin-left: auto; line-height: 1.35; }
+.sb-area { position: absolute; inset: 0; z-index: 3; touch-action: none; }
+.sb-sub { position: absolute; left: 0; top: 0; width: 140px; height: 96px; z-index: 4; pointer-events: none; }
+.sb-sub.zap { animation: zap .5s; }
+@keyframes zap { 0%, 50%, 100% { filter: none; } 25%, 75% { filter: drop-shadow(0 0 14px #ffe14d) brightness(1.4); } }
+.sb-bubble { position: absolute; left: 0; top: 0; width: 88px; height: 88px; border-radius: 50%; border: 3px solid rgba(255, 255, 255, .95); background: radial-gradient(circle at 32% 28%, #fff 0 10%, rgba(255, 255, 255, .5) 11% 26%, rgba(190, 240, 255, .35) 60%, rgba(255, 255, 255, .7) 100%); display: flex; align-items: center; justify-content: center; font-size: 42px; color: var(--ink); pointer-events: none; }
+.sb-bubble span { background: rgba(255, 255, 255, .8); border-radius: 14px; padding: 0 6px; line-height: 1.15; }
+.sb-bubble.pop { scale: 1.5; opacity: 0; transition: scale .3s, opacity .3s; }
+.sb-bubble.bad { background: rgba(255, 120, 120, .6); }
+.sb-jelly { position: absolute; left: 0; top: 0; width: 84px; height: 92px; pointer-events: none; }
+
+/* 보물상자 자물쇠 */
+.lk-tip { position: relative; font-size: 20px; border-radius: 16px; padding: 6px 14px; margin-left: auto; line-height: 1.35; }
+.lk-chest { position: absolute; left: 340px; top: 270px; width: 500px; height: 375px; z-index: 4; }
+.lk-chest > svg { width: 100%; height: 100%; overflow: visible; }
+.lk-lid { transform-box: fill-box; transform-origin: 0% 100%; transition: transform .6s; }
+.lk-chest.open .lk-lid { transform: translateY(-30px) rotate(-14deg); }
+.lk-peek { position: absolute; left: 50%; top: 56px; transform: translateX(-50%); font-size: 62px; background: #fff; border: 4px solid var(--ink); border-radius: 18px; padding: 0 20px; opacity: 0; transition: opacity .3s; pointer-events: none; white-space: nowrap; }
+.lk-peek.show { opacity: 1; }
+.lk-prize { position: absolute; left: 175px; top: 10px; width: 150px; height: 150px; transform: scale(0); transition: transform .5s; pointer-events: none; }
+.lk-chest.open .lk-prize { transform: scale(1.1) translateY(-60px); }
+.lk-dials { position: absolute; left: 0; right: 0; top: 420px; display: flex; justify-content: center; gap: 18px; z-index: 5; }
+.lk-dial { width: 134px; display: flex; flex-direction: column; align-items: center; gap: 2px; background: #fff6d6; border: 5px solid var(--ink); border-radius: 22px; padding: 6px; }
+.lk-dial.fixed { background: #efe6d0; justify-content: center; opacity: .9; }
+.lk-up, .lk-down { width: 104px; height: 44px; border: 3px solid var(--ink); border-radius: 14px; background: var(--sky); font-size: 22px; padding: 0; }
+.lk-syl { font-size: 84px; line-height: 98px; cursor: pointer; }
+.lk-how { font-size: 20px; height: 24px; color: #2a8ac4; }
+.lk-dial.bad { border-color: #ff6b6b; box-shadow: 0 0 0 5px rgba(255, 107, 107, .5); }
+.lk-dial.spin .lk-syl { animation: dialspin .25s; }
+@keyframes dialspin { from { transform: translateY(-16px); opacity: .3; } }
+.lk-open { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 6; }
+
+/* 문어 먹물 지우기 */
+.ik-octo { position: absolute; left: 70px; top: 96px; width: 210px; height: 210px; z-index: 5; animation: bob 2.4s infinite; }
+.ik-octo.squirt { animation: boing2 .5s; }
+.ik-card { position: absolute; background: #fff; border: 6px solid var(--ink); border-radius: 26px; overflow: hidden; z-index: 4; }
+.ik-word { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--ink); letter-spacing: 8px; }
+.ik-ink { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; }
+.ik-tip { position: absolute; left: 905px; top: 120px; width: 250px; font-size: 20px; border-radius: 16px; padding: 8px 14px; line-height: 1.4; z-index: 5; }
+.ik-choices { position: absolute; left: 0; right: 0; top: 440px; display: flex; justify-content: center; gap: 26px; z-index: 5; }
+.ik-choice { width: 210px; height: 210px; background: #fff; border: 6px solid var(--ink); border-radius: 30px; padding: 22px; opacity: .55; transition: opacity .3s; }
+.ik-choices.ready .ik-choice { opacity: 1; }
+.ik-pic { width: 100%; height: 100%; }
+.ik-choice.right { background: #fff6b0; box-shadow: 0 0 0 8px var(--yellow); }
+.ik-choice.nope { background: #ffd6d6; opacity: .5; }
+
+/* 조개 짝 맞추기 */
+.sh-tip { position: absolute; left: 50%; top: 84px; transform: translateX(-50%); font-size: 22px; border-radius: 16px; padding: 6px 16px; z-index: 5; white-space: nowrap; }
+.sh-grid { position: absolute; left: 0; right: 0; top: 140px; bottom: 20px; display: grid; justify-content: center; align-content: center; gap: 22px 30px; z-index: 5; }
+.sh-clam { position: relative; width: 200px; height: 190px; border: none; background: none; padding: 0; perspective: 600px; }
+.sh-in { position: absolute; inset: 12px; background: #fff; border: 5px solid var(--ink); border-radius: 26px; display: flex; align-items: center; justify-content: center; }
+.sh-clam:not(.open):not(.done) .sh-in { visibility: hidden; }
+.sh-pic { width: 128px; height: 128px; }
+.sh-word { font-size: 60px; }
+.sh-lid { position: absolute; inset: 0; transition: transform .35s, opacity .35s; transform-origin: 50% 0; }
+.sh-lid svg { width: 100%; height: 100%; }
+.sh-clam.open .sh-lid, .sh-clam.done .sh-lid { transform: rotateX(80deg) translateY(-30px); opacity: 0; }
+.sh-clam.done .sh-in { background: #fff6b0; box-shadow: 0 0 18px rgba(255, 255, 255, .9); }
+.sh-clam.nope .sh-in { background: #ffd6d6; }
+
+/* 엔딩 뒤: 마을의 좀비 친구, 골라 놀기 */
+.vchar.zombie { left: 684px; top: 334px; width: 104px; height: 104px; animation: bob 2.8s infinite; }
+.board-tabs { display: flex; justify-content: center; gap: 16px; padding: 10px 0 12px; }
+.btab { -webkit-text-stroke: 0; font-size: 32px; padding: 6px 30px; border: 4px solid var(--ink); border-radius: 26px; background: #f3e2c8; color: var(--ink); }
+.btab.on { background: var(--yellow); box-shadow: 0 4px 0 var(--ink); }
+.free-grid { display: grid; grid-template-columns: repeat(5, 1fr); grid-auto-rows: 1fr; gap: 12px; height: 600px; }
+.free-grid[hidden], .qcards[hidden] { display: none; }
+.free-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; background: var(--paper); border: 4px solid var(--ink); border-radius: 18px; padding: 8px 4px; font-size: 22px; line-height: 1.2; box-shadow: 0 5px 0 rgba(90, 64, 50, .4); }
+.free-btn .free-pic { width: 100px; height: 100px; }
+.free-btn small { font-size: 14px; opacity: .65; }

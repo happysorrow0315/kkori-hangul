@@ -23,8 +23,12 @@ export const VOWEL_SPLIT = {
   'ㅝ': ['ㅜ', 'ㅓ'], 'ㅞ': ['ㅜ', 'ㅔ'], 'ㅟ': ['ㅜ', 'ㅣ'], 'ㅢ': ['ㅡ', 'ㅣ'],
 };
 
+// ㅐ ㅔ ㅒ ㅖ 도 사실은 두 모음이 합쳐진 것 (4챕터에서 원리로 가르침)
+export const AE_SPLIT = { 'ㅐ': ['ㅏ', 'ㅣ'], 'ㅔ': ['ㅓ', 'ㅣ'], 'ㅒ': ['ㅑ', 'ㅣ'], 'ㅖ': ['ㅕ', 'ㅣ'] };
+
 export function combineVowels(a, b) {
   for (const [k, [x, y]] of Object.entries(VOWEL_SPLIT)) if (x === a && y === b) return k;
+  for (const [k, [x, y]] of Object.entries(AE_SPLIT)) if (x === a && y === b) return k;
   return null;
 }
 
@@ -134,4 +138,21 @@ export function similarity(a, b) {
     }
   });
   return score;
+}
+
+// 4챕터: 모양이 헷갈리는 모음 (자물쇠 다이얼, 잠수함 거품용)
+export const VOWEL_RIVALS = {
+  'ㅐ': ['ㅔ', 'ㅏ', 'ㅓ', 'ㅒ'], 'ㅔ': ['ㅐ', 'ㅓ', 'ㅏ', 'ㅖ'], 'ㅒ': ['ㅖ', 'ㅐ', 'ㅑ', 'ㅔ'], 'ㅖ': ['ㅒ', 'ㅔ', 'ㅕ', 'ㅐ'],
+  'ㅝ': ['ㅘ', 'ㅜ', 'ㅓ', 'ㅟ'], 'ㅘ': ['ㅝ', 'ㅗ', 'ㅏ', 'ㅚ'], 'ㅚ': ['ㅙ', 'ㅞ', 'ㅟ', 'ㅗ'], 'ㅙ': ['ㅞ', 'ㅚ', 'ㅗ', 'ㅐ'],
+  'ㅞ': ['ㅙ', 'ㅚ', 'ㅜ', 'ㅔ'], 'ㅟ': ['ㅚ', 'ㅢ', 'ㅜ', 'ㅝ'], 'ㅢ': ['ㅟ', 'ㅡ', 'ㅣ', 'ㅚ'],
+};
+export const vowelRivals = (j) => VOWEL_RIVALS[j] || SIMILAR[j] || [];
+// ㅐ ㅔ ㅒ ㅖ 나 복모음이 들어 있는 글자인지 (4챕터 놀이의 핵심 칸)
+export const isTrickyVowel = (j) => j in VOWEL_RIVALS;
+// 모음만 바꾼 헷갈리는 글자: 개 → 게, 가, 거
+export function vowelAlikes(syl, n = 3) {
+  const d = decompose(syl);
+  if (!d) return [];
+  const out = vowelRivals(d.jung).map((j) => compose(d.cho, j, d.jong)).filter((s) => s && s !== syl);
+  return out.slice(0, n);
 }

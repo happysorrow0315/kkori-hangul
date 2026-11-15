@@ -6,14 +6,17 @@ export const CATS = {
   batchim: '받침 있는 글자 (ㄱ ㄴ ㄹ ㅁ ㅂ ㅇ)',
   double: '쌍자음 (ㄲ ㄸ ㅃ ㅆ ㅉ)',
   batchim2: '나머지 받침 (ㅅ ㅈ ㅊ ㅌ ㅍ ㄷ ㅋ)',
+  ae: 'ㅐ와 ㅔ (ㅏ+ㅣ=ㅐ, ㅓ+ㅣ=ㅔ)',
+  ye: 'ㅒ와 ㅖ (ㅑ+ㅣ=ㅒ, ㅕ+ㅣ=ㅖ)',
 };
 
 export const CHAPTERS = {
   1: { name: '동화 숲', progress: '마을 복원' },
   2: { name: '마법 왕국', progress: '마법 왕국 구하기' },
   3: { name: '우주', progress: '우주 구하기' },
+  4: { name: '바닷속', progress: '바닷속 구하기' },
 };
-export const LAST_CHAPTER = 3;
+export const LAST_CHAPTER = 4;
 
 export const CHAPTER_WORDS = {
   1: [
@@ -38,6 +41,16 @@ export const CHAPTER_WORDS = {
     // 나머지 받침
     '옷', '붓', '빗', '솥', '잎', '부엌', '젓가락', '숟가락', '곶감', '밭', '숲', '깻잎',
   ],
+  4: [
+    // ㅐ (ㅏ+ㅣ)
+    '개', '배', '새', '해', '새우', '고래', '조개', '해파리', '해마', '개미', '매미', '냄비',
+    // ㅔ (ㅓ+ㅣ)
+    '게', '세모', '네모', '베개', '제비', '그네', '카메라', '메뚜기', '체리', '레몬', '케이크', '가게',
+    // ㅒ ㅖ
+    '시계', '계단', '계란',
+    // 복모음 다시 보기 (ㅝ ㅚ ㅟ ㅙ ㅘ)
+    '원숭이', '원피스', '병원', '열쇠', '참외', '바퀴', '다람쥐', '횃불', '화분',
+  ],
 };
 
 const COMPOUND = /[ㅘㅙㅚㅝㅞㅟㅢ]/;
@@ -47,6 +60,11 @@ const DOUBLE_CHO = /[ㄲㄸㅃㅆㅉ]/;
 const BASIC_JONG = ['ㄱ', 'ㄴ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅇ'];
 export function catOf(word) {
   const ds = [...word].map(decompose);
+  if (CHAPTER_WORDS[4].includes(word)) {
+    if (ds.some((d) => d && /[ㅒㅖ]/.test(d.jung))) return 'ye';
+    if (ds.some((d) => d && /[ㅐㅔ]/.test(d.jung))) return 'ae';
+    return 'compound';
+  }
   if (ds.some((d) => d && DOUBLE_CHO.test(d.cho))) return 'double';
   if (ds.some((d) => d && d.jong && !BASIC_JONG.includes(d.jong))) return 'batchim2';
   if (ds.some((d) => d?.jong)) return 'batchim';

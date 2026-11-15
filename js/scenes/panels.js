@@ -3,7 +3,7 @@ import { S, save, addInv } from '../state.js';
 import { el, onTap, esc, portrait, toast, confetti } from '../ui.js';
 import { itemSVG, catSVG, decorSVG, DECOR, HAT_LIST, starSVG, zombieSVG } from '../art.js';
 import { say, sfx } from '../audio.js';
-import { refreshBoard, TYPE_INFO, fill } from '../quests.js';
+import { refreshBoard, TYPE_INFO, TYPES, fill, reviewMode, makeQuest, CH_TYPES } from '../quests.js';
 import { wordsOf, catOf, CATS, CHAPTERS } from '../words.js';
 import { runMission } from './mission.js';
 
@@ -14,10 +14,29 @@ function modal(root, cls, inner) {
   return node;
 }
 
+// 골라 놀기 버튼 그림
+const TYPE_PIC = { find: '사과', dig: '고구마', trace: '나무', fish: '오리', bridge: '공주', orb: '회오리', hidden: '과자', rocket: '별똥별', alien: '꿀', twin: '딸기', stars: '토끼', sub: '고래', lock: '열쇠', ink: '게', shell: '조개' };
+const chapterOfType = (t) => Number(Object.keys(CH_TYPES).find((c) => CH_TYPES[c].includes(t)) || 1);
+
 export function openBoard(root) {
   const board = refreshBoard();
-  const node = modal(root, 'board-panel', `<div class="panel-title">의뢰 게시판</div><div class="qcards"></div>`);
+  const review = reviewMode();
+  const node = modal(root, 'board-panel', review
+    ? `<div class="panel-title board-tabs"><button class="btab on" data-tab="q">복습 의뢰</button><button class="btab" data-tab="free">골라 놀기</button></div><div class="qcards"></div><div class="free-grid" hidden></div>`
+    : `<div class="panel-title">의뢰 게시판</div><div class="qcards"></div>`);
   const wrap = node.querySelector('.qcards');
+  if (review) {
+    const grid = node.querySelector('.free-grid');
+    grid.innerHTML = TYPES.map((t) => `<button class="free-btn" data-t="${t}"><span class="free-pic">${itemSVG(TYPE_PIC[t])}</span>${esc(TYPE_INFO[t].label)}<small>${chapterOfType(t)}챕터</small></button>`).join('');
+    grid.querySelectorAll('.free-btn').forEach((b) => onTap(b, () => { node.remove(); runMission(makeQuest(b.dataset.t)); }));
+    node.querySelectorAll('.btab').forEach((b) => onTap(b, () => {
+      node.querySelectorAll('.btab').forEach((x) => x.classList.toggle('on', x === b));
+      const free = b.dataset.tab === 'free';
+      grid.hidden = !free;
+      wrap.hidden = free;
+      say(free ? '하고 싶은 놀이를 골라 봐! 1챕터부터 4챕터까지 다 있어.' : '틀렸던 글자가 자주 나오는 복습 의뢰야!');
+    }));
+  }
   board.forEach((q) => {
     const p = q.boss ? { name: '좀비괴물', svg: zombieSVG('evil') } : portrait(q.giver);
     const pic = q.boss ? zombieSVG('eat') : q.type === 'find' ? '<div class="qmystery">?</div>' : itemSVG(q.words[0]);
@@ -36,7 +55,7 @@ export function openBoard(root) {
     onTap(c.querySelector('.qgo'), () => { node.remove(); runMission(q); });
     wrap.appendChild(c);
   });
-  say('음~ 오늘은 어떤 의뢰를 해 볼까?');
+  say(review ? '대모험을 다 끝냈어! 복습 의뢰를 하거나, 골라 놀기에서 하고 싶은 놀이를 골라 봐!' : '음~ 오늘은 어떤 의뢰를 해 볼까?');
 }
 
 export function openShop(root, onChange) {

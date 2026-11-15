@@ -1,6 +1,6 @@
 // 난이도 자동 조절 + 부모 수동 설정
 import { S, save } from './state.js';
-import { wordsOf, catOf } from './words.js';
+import { wordsOf, catOf, ALL_WORDS, LAST_CHAPTER } from './words.js';
 
 function st(w) {
   if (!S.stats.words[w]) S.stats.words[w] = { seen: 0, ok: 0, bad: 0, streak: 0, last: -99 };
@@ -49,7 +49,7 @@ function weight(w) {
 }
 
 export function pickWords(n, exclude = [], filter = null) {
-  const pool = wordsOf(S.chapter).filter((w) => !exclude.includes(w) && (!filter || filter(w)));
+  const pool = wordPool().filter((w) => !exclude.includes(w) && (!filter || filter(w)));
   const out = [];
   while (out.length < n && pool.length) {
     const ws = pool.map(weight);
@@ -97,4 +97,10 @@ export function hardestWords(k = 8) {
     .sort((a, b) => b[1].bad - a[1].bad)
     .slice(0, k)
     .map(([w, s]) => ({ w, ...s }));
+}
+
+// 마지막 챕터까지 다 깨면 모든 챕터 글자가 나옴 (틀렸던 글자가 더 자주)
+export function wordPool() {
+  const done = S.chapter === LAST_CHAPTER && (S.story.cleared || []).includes(LAST_CHAPTER);
+  return done ? [...ALL_WORDS] : wordsOf(S.chapter);
 }
